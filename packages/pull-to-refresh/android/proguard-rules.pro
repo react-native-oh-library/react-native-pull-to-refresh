@@ -1,1 +1,0 @@
--keepnames class androidx.viewpager2.widget.ViewPager2*

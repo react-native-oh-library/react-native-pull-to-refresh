@@ -1,0 +1,57 @@
+{
+  "name": "@react-native-oh-tpl/pull-to-refresh",
+  "description": "A react-native PullToRefresh component.",
+  "version": "0.27.0-1",
+  "main": "./src/index.tsx",
+  "react-native": "src/index",
+  "nativePackage": true,
+  "files": [
+    "harmony",
+    "src"
+  ],
+  "repository": "https://github.com/react-native-oh-library/react-native-pull-to-refresh",
+  "homepage": "https://github.com/react-native-oh-library/react-native-pull-to-refresh/blob/sig/README.md",
+  "author": "sdcx",
+  "license": "MIT",
+  "keywords": [
+    "react-native",
+    "pull-to-refresh",
+    "refresh-control"
+  ],
+  "scripts": {
+    "tsc": "tsc",
+    "test": "jest",
+    "lint": "eslint . --fix --ext .js,.jsx,.ts,.tsx",
+    "codegen-lib": "react-native codegen-lib-harmony --no-safety-check --npm-package-name pull-to-refresh --cpp-components-spec-paths ./src --cpp-output-path ./harmony/pull_to_refresh/src/main/cpp/generated --ets-output-path ./harmony/pull_to_refresh/src/main/ets/generated"
+  },
+  "dependencies":{
+    "@sdcx/pull-to-refresh": "0.27.0"
+  },
+  "peerDependencies": {
+    "@babel/core": "^7.13.10",
+    "@babel/runtime": "^7.13.10",
+    "@react-native-community/eslint-config": "^3.0.0",
+    "@types/jest": "^27.0.1",
+    "@types/react": "^17.0.2",
+    "@types/react-native": "^0.67.0",
+    "@types/react-test-renderer": "17.0.2",
+    "babel-jest": "^27.0.6",
+    "jest": "^27.0.6",
+    "metro-react-native-babel-preset": "^0.66.2",
+    "react": "17.0.2",
+    "react-native": "^0.67.4",
+    "react-test-renderer": "17.0.2",
+    "eslint": "^7.32.0",
+    "typescript": "^4.6.4"
+  },
+  "devDependencies": {
+    "@rnoh/react-native-harmony-cli": "npm:@react-native-oh/react-native-harmony-cli@^0.0.27"
+  },
+  "harmony": {
+    "alias": "@sdcx/pull-to-refresh"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
+}

@@ -1,71 +1,410 @@
-# React Native 原生 UI 组件
+# PullToRefresh
 
-本仓库包含一系列原生组件：
+`PullToRefresh` 是一个 React Native 原生 UI 组件。
 
-## 版本兼容
+React Native 内置的下拉刷新组件比较简陋，且 iOS 和 Android 平台的表现很不一致。幸运的是，它提供了一个 `refreshControl` 属性，可以用来自定义下拉刷新组件。
 
-| 版本       | RN 版本 | 新旧架构 |
-| ---------- | ------- | -------- |
-| 0.x        | >= 0.67 | 旧架构   |
-| 1.x（WIP） | >= 0.76 | 新架构   |
+`PullToRefresh` 提供了自定义下拉刷新的能力。
 
-| RN 版本                           | iOS                                 | Android                               | 三方库版本                                                                                                |
-| --------------------------------- | ----------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| 0.72(2023.06)                     | 最低支持 iOS 12.4                   |                                       |                                                                                                           |
-| 0.73(2023.11)                     | 最低支持 iOS 13.4                   | 支持 Android 14<br>必须 Java 17       | react-native-gesture-handler@2.14.0,<br>react-native-reanimated@3.15.0,<br>react-native-drop-shadow@1.0.0 |
-| 0.74(2024.04)                     | arm64 设置                          | minSdkVersion 23                      | react-native-safe-area-context@^5.4.0                                                                     |
-| 0.75(2024.08)                     |                                     | 用 **kotlin** 实现<br>仅支持 androidx |                                                                                                           |
-| 0.76(2024.10)<br>支持 `boxShadow` | 最低支持 iOS 15.1<br>支持 Xcode16.3 | minSdkVersion 24                      | react-native-reanimated@^3.17.5                                                                           |
-| 0.77(2025.01)                     | Swift 模版                          | 支持 Android 15<br>16 KB pages        | react-native-gesture-handler@^2.25.0 <br>react-native-drop-shadow@^1.0.3                                  |
+## 特点
 
-## 库
+- 支持自定义下拉刷新
+- 支持全局设置下拉刷新的样式
+- 额外支持 `WebView`、`ScrollView`、[NestedScrollView](https://github.com/sdcxtech/react-native-troika/blob/master/packages/nested-scroll/README.md)
+- 支持上拉加载更多
 
-### [NestedScrollView](./packages/nested-scroll/README.md)
+|                                                     |                                                  |
+| --------------------------------------------------- | ------------------------------------------------ |
+| <img src="./docs/assets/separated.gif" width="320"> | <img src="./docs/assets/shared.gif" width="320"> |
 
-用于实现嵌套滚动，使用简单。可以和 PagerView，TabView 等组合使用。
+## Installation
 
-<img src="./packages/nested-scroll/docs/assets/struct.png">
+```bash
+yarn add @sdcx/pull-to-refresh
+# &
+pod install
+```
 
-### [PullToRefresh](./packages/pull-to-refresh/README.md)
+## Usage
 
-提供了在 React 层自定义下拉刷新的能力。
+```tsx
+import { PullToRefresh } from '@sdcx/pull-to-refresh'
 
-<img src="./packages/pull-to-refresh/docs/assets/separated.gif" width="320">
+function App() {
+  const [refreshing, setRefreshing] = useState(false)
 
-### [BottomSheet](./packages/bottom-sheet/README.md)
+  return (
+    <PullToRefresh
+      refreshing={refreshing}
+      onRefresh={() => {
+        setRefreshing(true)
+        setTimeout(() => {
+          setRefreshing(false)
+        }, 2000)
+      }}>
+      <FlatList
+        nestedScrollEnabled
+        data={Array.from({ length: 20 })}
+        renderItem={({ item, index }) => <Text>{index}</Text>}
+        keyExtractor={(item, index) => index.toString()}
+      />
+    </PullToRefresh>
+  )
+}
+```
 
-将 Android 的 [BottomSheetBehavior](https://developer.android.com/reference/com/google/android/material/bottomsheet/BottomSheetBehavior) 迁移到了 React Native 中，在 API 设计上也尽量和 Android 保持一致，同时支持 iOS。
+或者
 
-<img src="./packages/bottom-sheet/docs/assets/pagerview.gif" width="320">
+```tsx
+import { RefreshControl } from '@sdcx/pull-to-refresh'
 
-### [ActivityIndicator](./packages/activity-indicator/README.md)
+function App() {
+  const [refreshing, setRefreshing] = useState(false)
 
-在 Android 上实现了和 iOS 类似的菊花组件。
+  return (
+    <FlatList
+      nestedScrollEnabled
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true)
+            setTimeout(() => {
+              setRefreshing(false)
+            }, 2000)
+          }}
+        />
+      }
+      data={Array.from({ length: 20 })}
+      renderItem={({ item, index }) => <Text>{index}</Text>}
+      keyExtractor={(item, index) => index.toString()}
+    />
+  )
+}
+```
 
-<img src="./packages/activity-indicator/docs/assets/activity.png" width="320">
+> :exclamation: :exclamation: :exclamation:
+> Android 是基于 [NestedScrolling API](https://developer.android.com/reference/androidx/core/view/NestedScrollingChild) 实现的。
+>
+> <h3>请记得为你的列表开启 `nestedScrollEnabled` 属性。</h3>
+>
+> :exclamation: :exclamation: :exclamation:
 
-### [ImageCropView](./packages/image-crop/README.md)
+这两种使用方式在效果上并无不同。
 
-用来实现头像裁剪，和社区其它方安不同，仅仅只是个 View，非常方便页面的自定义布局。
+此外，`PullToRefresh` 支持上拉加载更多，以及所有可滚动视图，譬如 `WebView`, `ScrollView`, `NestedScrollView`。
 
-也可以用来实现图片裁剪，支持设置裁剪区域。
+### 自定义下拉刷新
 
-### [KeyboardInsetsView](./packages/keyboard-insets/README.md)
+你一定不会想使用本库提供的默认下拉刷新，因为它太丑了。那么如何自定义下拉刷新呢？
 
-KeyboardInsetsView 是一个 React Native 原生 UI 组件，用于处理软键盘遮挡输入框的问题。自动模式下使用非常简单，不需要额外代码来处理键盘。
+首先，自定义一个 `PullToRefreshHeader`，你需要合理使用 `onStateChanged` 和 `onOffsetChanged` 这两个回调来实现你想要的下拉刷新效果。
 
-如果想要实现类似聊天界面那样的效果，也不在话下。
+记得将 `props` 中的 `onRefresh` 和 `refreshing` 这两个属性透传给 `PullToRefreshHeader`。
 
-<img src="./packages/keyboard-insets/docs/assets/chat.gif" width="320">
+```tsx
+import {
+  PullToRefreshHeader,
+  PullToRefreshHeaderProps,
+  PullToRefreshOffsetChangedEvent,
+  PullToRefreshStateChangedEvent,
+  PullToRefreshState,
+  PullToRefreshStateIdle,
+  PullToRefreshStateRefreshing,
+} from '@sdcx/pull-to-refresh'
 
-### [Overlay](./packages/overlay/README.md)
+export function CustomPullToRefreshHeader(props: PullToRefreshHeaderProps) {
+  const { onRefresh, refreshing } = props
 
-`Overlay` 是一个 React Native 原生 UI 基础设施，它漂浮在你的 React Native 应用之上，可用于实现 Modal, Alert, Toast, Popover, Notification, Hoverball 等顶层 UI。
+  const [text, setText] = useState('下拉刷新')
 
-### [WheelPicker](./packages/wheel-picker/README.md)
+  const onStateChanged = useCallback((event: PullToRefreshStateChangedEvent) => {
+    const state = event.nativeEvent.state
+    if (state === PullToRefreshStateIdle) {
+      setText('下拉刷新')
+    } else if (state === PullToRefreshStateRefreshing) {
+      setText('正在刷新...')
+    } else {
+      setText('松开刷新')
+    }
+  }, [])
 
-一个非常简单的 WheelPicker
+  const onOffsetChanged = useCallback((event: PullToRefreshOffsetChangedEvent) => {
+    console.log('refresh header offset', event.nativeEvent.offset)
+  }, [])
 
-一个非常帅的 WheelPicker
+  return (
+    <PullToRefreshHeader
+      style={styles.container}
+      onOffsetChanged={onOffsetChanged}
+      onStateChanged={onStateChanged}
+      onRefresh={onRefresh}
+      refreshing={refreshing}>
+      <Text style={styles.text}>{text}</Text>
+    </PullToRefreshHeader>
+  )
+}
+```
 
-<img src="./packages/wheel-picker/docs/assets/wheelpicker.png" width="320">
+### 设置全局默认下拉刷新样式
+
+然后在应用启动时，设置全局默认下拉刷新。通常在你应用的入口文件处设置。
+
+```tsx
+import { PullToRefresh } from '@sdcx/pull-to-refresh'
+
+PullToRefresh.setDefaultHeader(CustomPullToRefreshHeader)
+```
+
+该设置同时对 `PullToRefresh` 和 `RefreshControl` 生效。
+
+### 设置局部特定下拉刷新样式
+
+如果你的某些页面不想使用全局默认的下拉刷新样式，那么你可以设置 `PullToRefresh` 的 `header` 属性。此时，将 `onRefresh` 和 `refreshing` 属性传递给 `header`。
+
+```tsx
+import { PullToRefresh } from '@sdcx/pull-to-refresh'
+
+function App() {
+  const [refreshing, setRefreshing] = useState(false)
+
+  return (
+    <PullToRefresh
+      header={
+        <CustomPullToRefreshHeader
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true)
+            setTimeout(() => {
+              setRefreshing(false)
+            }, 2000)
+          }}
+        />
+      }>
+      <FlatList
+        nestedScrollEnabled
+        data={Array.from({ length: 20 })}
+        renderItem={({ item, index }) => <Text>{index}</Text>}
+        keyExtractor={(item, index) => index.toString()}
+      />
+    </PullToRefresh>
+  )
+}
+```
+
+### 自定义 `RefreshControl`
+
+当然，如果你不喜欢包裹 `PullToRefresh`，也可以自定义 `RefreshControl`
+
+```tsx
+import { RefreshControlProps } from 'react-native'
+import { PullToRefresh } from '@sdcx/pull-to-refresh'
+
+export function CustomRefreshControl(props: RefreshControlProps) {
+  if (Platform.OS === 'android') {
+    return <PullToRefresh header={<CustomPullToRefreshHeader {...props} />} />
+  }
+  return <CustomPullToRefreshHeader {...props} />
+}
+```
+
+然后使用自定义的 `CustomRefreshControl` 即可：
+
+```tsx
+function App() {
+  const [refreshing, setRefreshing] = useState(false)
+
+  return (
+    <FlatList
+      nestedScrollEnabled
+      refreshControl={
+        <CustomRefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true)
+            setTimeout(() => {
+              setRefreshing(false)
+            }, 2000)
+          }}
+        />
+      }
+      data={Array.from({ length: 20 })}
+      renderItem={({ item, index }) => <Text>{index}</Text>}
+      keyExtractor={(item, index) => index.toString()}
+    />
+  )
+}
+```
+
+### 上拉加载更多
+
+加载更多有两种方式，一种方式是列表自身提供的**触底加载**更多，通过 `onEndReached` 属性实现。另一种方式是经典的**上拉加载**更多，通过 `PullToRefresh` 提供的 `onLoadMore` 属性实现。
+
+大多数情况下，使用 `onEndReached` 或许是较好的选择。
+
+如果你的 App 更倾向于上拉加载更多，那么你可以使用 `PullToRefresh` 的 `onLoadMore` 属性。
+
+上拉加载有两种模式，一种是手动模式，像下拉刷新那样，释放后加载更多；另一种是自动模式，上拉一定距离后自动加载更多。
+
+你需要根据 App 的设计偏好来选择合适的模式。
+
+```tsx
+import { PullToRefresh } from '@sdcx/pull-to-refresh'
+
+function App() {
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [noMoreData, setNoMoreData] = useState(false)
+
+  const loadMore = () => {
+    setLoadingMore(true)
+    setTimeout(() => {
+      setLoadingMore(false)
+    }, 2000)
+  }
+
+  return (
+    <PullToRefresh loadingMore={loadingMore} onLoadMore={loadMore} noMoreData={noMoreData}>
+      <FlatList
+        nestedScrollEnabled
+        data={Array.from({ length: 20 })}
+        renderItem={({ item, index }) => <Text>{index}</Text>}
+        keyExtractor={(item, index) => index.toString()}
+      />
+    </PullToRefresh>
+  )
+}
+```
+
+### 自定义上拉加载更多
+
+自定义加载更多和自定义下拉刷新差不多，自定义一个组合组件，将 `PullToRefreshFooter` 包裹在里面，并透传相关属性即可，如下：
+
+```tsx
+import {
+  PullToRefreshFooter,
+  PullToRefreshFooterProps,
+  PullToRefreshStateChangedEvent,
+  PullToRefreshStateIdle,
+  PullToRefreshStateRefreshing,
+} from '@sdcx/pull-to-refresh'
+
+export function CustomPullToRefreshFooter(props: PullToRefreshFooterProps) {
+  const { onRefresh, refreshing, noMoreData } = props
+
+  const [text, setText] = useState('上拉加载更多')
+
+  const onStateChanged = useCallback((event: PullToRefreshStateChangedEvent) => {
+    const state = event.nativeEvent.state
+    if (state === PullToRefreshStateIdle) {
+      setText('上拉加载更多')
+    } else if (state === PullToRefreshStateRefreshing) {
+      setText('正在加载更多...')
+    } else {
+      setText('松开加载更多')
+    }
+  }, [])
+
+  const onOffsetChanged = useCallback((event: PullToRefreshOffsetChangedEvent) => {
+    console.log('refresh footer offset', event.nativeEvent.offset)
+  }, [])
+
+  return (
+    <PullToRefreshFooter
+      style={styles.container}
+      manual={true /* 设置模式为手动 */}
+      onOffsetChanged={onOffsetChanged}
+      onStateChanged={onStateChanged}
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+      noMoreData={noMoreData}>
+      <Text style={styles.text}>{noMoreData ? '没有更多数据了' : text}</Text>
+    </PullToRefreshFooter>
+  )
+}
+```
+
+然后在应用启动时，设置全局默认上拉加载更多。通常在你应用的入口文件处设置。
+
+```tsx
+import { PullToRefresh } from '@sdcx/pull-to-refresh'
+
+PullToRefresh.setDefaultFooter(CustomPullToRefreshFooter)
+```
+
+当然，也可以通过 `PullToRefresh` 的 `footer` 属性来为特定页面设置特定的上拉加载更多样式。
+
+```tsx
+import { PullToRefresh } from '@sdcx/pull-to-refresh'
+
+function App() {
+  const [loadingMore, setLoadingMore] = useState(false)
+
+  return (
+    <PullToRefresh
+      footer={
+        <LocalPullToRefreshFooter
+          loadingMore={loadingMore}
+          onLoadMore={() => {
+            setLoadingMore(true)
+            setTimeout(() => {
+              setLoadingMore(false)
+            }, 2000)
+          }}
+        />
+      }>
+      <FlatList
+        nestedScrollEnabled
+        data={Array.from({ length: 20 })}
+        renderItem={({ item, index }) => <Text>{index}</Text>}
+        keyExtractor={(item, index) => index.toString()}
+      />
+    </PullToRefresh>
+  )
+}
+```
+
+### 自定义 `RefreshControl` 来实现加载更多
+
+如果你钟爱 `refreshControl`, 那么也可以定义一个 `LoadMoreRefreshControl`
+
+```tsx
+import { RefreshControlProps } from 'react-native'
+import { PullToRefresh } from '@sdcx/pull-to-refresh'
+
+export function LoadMoreRefreshControl(props: RefreshControlProps) {
+  if (Platform.OS === 'android') {
+    return <PullToRefresh footer={<CustomPullToRefreshFooter {...props} />} />
+  }
+  return <CustomPullToRefreshFooter {...props} />
+}
+```
+
+然后使用自定义的 `LoadMoreRefreshControl` 即可：
+
+```tsx
+function App() {
+  const [loadingMore, setLoadingMore] = useState(false)
+
+  return (
+    <FlatList
+      nestedScrollEnabled
+      refreshControl={
+        <LoadMoreRefreshControl
+          refreshing={loadingMore}
+          onRefresh={() => {
+            setLoadingMore(true)
+            setTimeout(() => {
+              setLoadingMore(false)
+            }, 2000)
+          }}
+        />
+      }
+      data={Array.from({ length: 20 })}
+      renderItem={({ item, index }) => <Text>{index}</Text>}
+      keyExtractor={(item, index) => index.toString()}
+    />
+  )
+}
+```
+
+嘿嘿，下拉刷新秒变上拉加载更多。

@@ -1,0 +1,7 @@
+{
+  module: {
+    name: 'pull_to_refresh',
+    type: 'har',
+    deviceTypes: ['default'],
+  },
+}

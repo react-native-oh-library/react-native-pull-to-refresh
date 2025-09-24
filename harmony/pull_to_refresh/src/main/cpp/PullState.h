@@ -33,7 +33,7 @@ typedef enum {
     Up_PULL_UP = 0x006,     // 回弹
 } UpPull_Status;
 
-const float MAX_TRANSLATE = 200.0; // 最大拉距
+const float MAX_TRANSLATE = 100.0; // 最大拉距
 const float SENSITIVITY = 0.7;     // 灵敏度
 const int ANIMA_DURATION = 150;    // 默认关闭刷新头动画的时间
 

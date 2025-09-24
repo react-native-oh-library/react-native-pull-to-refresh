@@ -38,12 +38,14 @@ public:
     bool isNoMoreData() { return noMoreData; }
     void onOffsetChanged(float offset);
     float getChildHeight() { return mChildHeight; }
+    bool isAutoLoadMore() { return !manual; }
 
 private:
     PullStackNode m_footerStackNode;
     float mChildHeight{0.0};
     PullToRefreshInterface *m_pullToRefreshNodeDelegate{nullptr};
     bool noMoreData{false};
+    bool manual{false};
 };
 } // namespace rnoh
 

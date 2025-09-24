@@ -24,6 +24,7 @@ RNCPullToRefreshFooterInstance::~RNCPullToRefreshFooterInstance() { m_pullToRefr
 
 void RNCPullToRefreshFooterInstance::onChildInserted(ComponentInstance::Shared const &childComponentInstance,
                                                      std::size_t index) {
+    childComponentInstance->getLocalRootArkUINode().setPosition({0, 0});
     CppComponentInstance::onChildInserted(childComponentInstance, index);
     m_footerStackNode.insertChild(childComponentInstance->getLocalRootArkUINode(), index);
     m_footerStackNode.setPosition({0, 0});
@@ -61,6 +62,7 @@ void RNCPullToRefreshFooterInstance::onPropsChanged(SharedConcreteProps const &p
     if (props == nullptr) {
         return;
     }
+    manual = props->manual;
     noMoreData = props->noMoreData;
     if (!props->refreshing && m_pullToRefreshNodeDelegate) {
         m_pullToRefreshNodeDelegate->onClosePull(PULL_FOOTER);

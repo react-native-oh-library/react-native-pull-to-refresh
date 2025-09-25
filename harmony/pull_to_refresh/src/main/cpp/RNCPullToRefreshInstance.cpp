@@ -21,6 +21,25 @@
 #include <glog/logging.h>
 
 namespace rnoh {
+
+static void receiveEvent(ArkUI_NodeEvent *event) {
+#ifdef C_API_ARCH
+    try {
+        auto eventType = OH_ArkUI_NodeEvent_GetEventType(event);
+        auto target = static_cast<RNCPullToRefreshInstance *>(OH_ArkUI_NodeEvent_GetUserData(event));
+
+        if (eventType == ArkUI_NodeEventType::NODE_SCROLL_EVENT_ON_SCROLL_STOP) {
+            if (target) {
+                target->handleScrollStop();
+            }
+            return;
+        }
+    } catch (std::exception &e) {
+        LOG(ERROR) << e.what();
+    }
+#endif
+}
+
 RNCPullToRefreshInstance::RNCPullToRefreshInstance(Context context)
     : BaseRNCPullToRefreshNativeComponentInstance(std::move(context)) {
 
@@ -52,7 +71,7 @@ RNCPullToRefreshInstance::~RNCPullToRefreshInstance() {
         }
         m_panGesture = nullptr;
     }
-    NativeNodeApi::getInstance()->unregisterNodeEvent(m_PullRefreshNode.getArkUINodeHandle(), NODE_EVENT_ON_APPEAR);
+    unRegisterScroll();
     if (m_footerInstance) {
         m_footerInstance = nullptr;
     }
@@ -64,7 +83,43 @@ RNCPullToRefreshInstance::~RNCPullToRefreshInstance() {
     }
 }
 
-void RNCPullToRefreshInstance::onAppArea() { autoRefresh(); }
+void RNCPullToRefreshInstance::unRegisterScroll() {
+    NativeNodeApi::getInstance()->unregisterNodeEvent(m_PullRefreshNode.getArkUINodeHandle(), NODE_EVENT_ON_APPEAR);
+    if (m_footerInstance && m_footerInstance->isAutoLoadMore()) {
+        std::vector<ComponentInstance::Shared> child = getChildren();
+        for (ComponentInstance::Shared c : child) {
+            if (c->getComponentName() == "ScrollView") {
+                auto scrollView = std::dynamic_pointer_cast<rnoh::ScrollViewComponentInstance>(c);
+                if (scrollView != nullptr) {
+                    auto &m_node = scrollView->getLocalRootArkUINode();
+                    NativeNodeApi::getInstance()->unregisterNodeEvent(m_node.getArkUINodeHandle(),
+                                                                      NODE_SCROLL_EVENT_ON_SCROLL_STOP);
+                    NativeNodeApi::getInstance()->removeNodeEventReceiver(m_node.getArkUINodeHandle(), receiveEvent);
+                }
+            }
+        }
+    }
+}
+
+void RNCPullToRefreshInstance::onAppArea() {
+    autoRefresh();
+    // 注冊滚动监听 如开启自动加载更多开启注册滚动监听
+    if (m_footerInstance && m_footerInstance->isAutoLoadMore()) {
+        std::vector<ComponentInstance::Shared> child = getChildren();
+        for (ComponentInstance::Shared c : child) {
+            if (c->getComponentName() == "ScrollView") {
+                auto scrollView = std::dynamic_pointer_cast<rnoh::ScrollViewComponentInstance>(c);
+                if (scrollView != nullptr) {
+                    auto &node = scrollView->getLocalRootArkUINode();
+                    NativeNodeApi::getInstance()->addNodeEventReceiver(node.getArkUINodeHandle(), receiveEvent);
+                    NativeNodeApi::getInstance()->registerNodeEvent(node.getArkUINodeHandle(),
+                                                                    NODE_SCROLL_EVENT_ON_SCROLL_STOP,
+                                                                    NODE_SCROLL_EVENT_ON_SCROLL_STOP, this);
+                }
+            }
+        }
+    }
+}
 void RNCPullToRefreshInstance::onChildInserted(ComponentInstance::Shared const &childComponentInstance,
                                                std::size_t index) {
     CppComponentInstance::onChildInserted(childComponentInstance, index);
@@ -129,6 +184,7 @@ void RNCPullToRefreshInstance::panGesture(ArkUI_NodeHandle arkUI_NodeHandle) {
 
         ArkUI_GestureEventActionType actionType = OH_ArkUI_GestureEvent_GetActionType(event);
         if (actionType == GESTURE_EVENT_ACTION_ACCEPT) {
+            instance->trYTop = 0;
             instance->offsetY = 0;
             instance->downY = OH_ArkUI_PanGesture_GetOffsetY(event);
             instance->touchYOld = instance->offsetY;
@@ -220,14 +276,15 @@ void RNCPullToRefreshInstance::onActionUpEnd() {
 
 void RNCPullToRefreshInstance::onActionUpUpdate() {
     if (up_status == Up_FREE || up_status == Up_PULL_DOWN_1 || up_status == Up_PULL_DOWN_2 || up_status == Up_PULL_UP) {
-
         touchYNew = offsetY;
         if (!isComponentBottom()) {
+            touchYOld = touchYNew;
             return;
         }
         float trY = touchYOld - touchYNew;
         if ((up_status == Up_FREE && trY > 0) || up_status == Up_PULL_DOWN_1 || up_status == Up_PULL_DOWN_2) {
-            trYTop = this->getTranslateYOfRefresh(trY, 0.3);
+            float des = this->getTranslateYOfRefresh(trY, 0.3);
+            trYTop = des;
             setUpFooterHeight(trYTop);
             if (trYTop / MAX_TRANSLATE < 0.5) {
                 up_status = Up_PULL_DOWN_1;
@@ -416,42 +473,68 @@ void RNCPullToRefreshInstance::closeHeaderRefresh(float target, int closeTag) {
     }
 }
 
+/**
+ * 自动下拉刷新
+ */
 void RNCPullToRefreshInstance::autoRefresh() {
     if (m_headerInstance && m_headerInstance->getRefreshing() && state == FREE) { // 设置自动刷新
         // 模拟下拉操作
-        if (animation != nullptr && (animation->GetAnimationStatus() == CLOSE_ANIMATION_START ||
-                                     animation->GetAnimationStatus() == CLOSE_ANIMATION_RUN)) {
-            return;
-        }
-        if (animation == nullptr) {
-            animation = std::make_shared<PullAnimated>();
-        }
-        animation->SetAnimationParams(
-            static_cast<std::chrono::milliseconds>(ANIMA_DURATION), 0, MAX_TRANSLATE / 2, [this](double value) {
-                trYTop = value < 0 ? 0 : value;
-                auto instance = std::static_pointer_cast<RNInstanceInternal>(m_deps->rnInstance.lock());
-                if (!instance) {
-                    return;
-                }
-                instance->getTaskExecutor()->runTask(
-                    TaskThread::MAIN, [wptr = this->weak_from_this(), wInstance = instance->weak_from_this()] {
-                        auto ptr = std::static_pointer_cast<RNCPullToRefreshInstance>(wptr.lock());
-                        if (ptr) {
+        autoAnimation(true);
+    }
+}
+
+/**
+ * 自动上拉刷新
+ */
+void RNCPullToRefreshInstance::handleScrollStop() {
+    if (m_footerInstance && m_footerInstance->isAutoLoadMore() && up_status == Up_FREE &&
+        !(m_footerInstance->isNoMoreData()) && isComponentBottom()) {
+        // 模拟上拉操作
+        autoAnimation(false);
+    }
+}
+void RNCPullToRefreshInstance::autoAnimation(bool isHeader) {
+    if (animation != nullptr && (animation->GetAnimationStatus() == CLOSE_ANIMATION_START ||
+                                 animation->GetAnimationStatus() == CLOSE_ANIMATION_RUN)) {
+        return;
+    }
+    if (animation == nullptr) {
+        animation = std::make_shared<PullAnimated>();
+    }
+    animation->SetAnimationParams(
+        static_cast<std::chrono::milliseconds>(ANIMA_DURATION), 0, MAX_TRANSLATE / 2, [this, isHeader](double value) {
+            trYTop = value < 0 ? 0 : value;
+            auto instance = std::static_pointer_cast<RNInstanceInternal>(m_deps->rnInstance.lock());
+            if (!instance) {
+                return;
+            }
+            instance->getTaskExecutor()->runTask(
+                TaskThread::MAIN, [wptr = this->weak_from_this(), isHeader, wInstance = instance->weak_from_this()] {
+                    auto ptr = std::static_pointer_cast<RNCPullToRefreshInstance>(wptr.lock());
+                    if (ptr) {
+                        if (isHeader) {
                             ptr->setPullHeaderHeight(ptr->trYTop);
-                            if (ptr->trYTop == MAX_TRANSLATE / 2) {
+                        } else {
+                            ptr->setUpFooterHeight(ptr->trYTop);
+                        }
+
+                        if (ptr->trYTop == MAX_TRANSLATE / 2) {
+                            if (isHeader) {
                                 ptr->onActionPullEnd();
-                                ptr->m_PullRefreshNode.markDirty();
-                                if (ptr->animation && ptr->animation->GetAnimationStatus() != CLOSE_ANIMATION_FREE) {
-                                    ptr->animation = nullptr;
-                                }
+                            } else {
+                                ptr->onActionUpEnd();
+                            }
+                            ptr->m_PullRefreshNode.markDirty();
+                            if (ptr->animation && ptr->animation->GetAnimationStatus() != CLOSE_ANIMATION_FREE) {
+                                ptr->animation = nullptr;
                             }
                         }
-                    });
-            });
-        if (animation->GetAnimationStatus() == CLOSE_ANIMATION_FREE ||
-            animation->GetAnimationStatus() == CLOSE_ANIMATION_FINISH) {
-            animation->Start();
-        }
+                    }
+                });
+        });
+    if (animation->GetAnimationStatus() == CLOSE_ANIMATION_FREE ||
+        animation->GetAnimationStatus() == CLOSE_ANIMATION_FINISH) {
+        animation->Start();
     }
 }
 

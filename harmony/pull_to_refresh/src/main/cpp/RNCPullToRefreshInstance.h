@@ -43,7 +43,7 @@ public:
     void onClosePull(int tag) override;
     void autoRefresh() override;
     void onAppArea() override;
-
+    void handleScrollStop();
 
 private:
     bool isComponentTop();
@@ -61,7 +61,8 @@ private:
     void onOffsetChanged(bool isHeader, float offset);
     void closeHeaderRefresh(float target, int tag);
     void setListScrollPosition(float y);
-
+    void autoAnimation(bool isHeader);
+    void unRegisterScroll();
 private:
     PullToRefreshComponentNode m_PullRefreshNode;
     PullStackNode m_footerStackNode;

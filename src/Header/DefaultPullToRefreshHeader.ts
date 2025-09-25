@@ -1,5 +1,5 @@
 import React, {useCallback, useState} from 'react';
-import {StyleSheet, Text} from 'react-native';
+import {StyleSheet, Text,Animated} from 'react-native';
 import {
   PullToRefreshHeaderProps,
   PullToRefreshOffsetChangedEvent,
@@ -29,15 +29,24 @@ export function DefaultPullToRefreshHeader(props: PullToRefreshHeaderProps) {
     console.log('refresh header offset', event.nativeEvent.offset);
   }, []);
 
-  return (
-    <PullToRefreshHeader
-      style={styles.container}
-      onOffsetChanged={onOffsetChanged}
-      onStateChanged={onStateChanged}
-      onRefresh={onRefresh}
-      refreshing={refreshing}>
-      <Text style={styles.text}>{text}</Text>
-    </PullToRefreshHeader>
+  return React.createElement(
+    PullToRefreshHeader,
+    {
+      style: styles.container,
+      onOffsetChanged: onOffsetChanged,
+      onStateChanged: onStateChanged,
+      onRefresh: onRefresh,
+      refreshing: refreshing
+    },
+    React.createElement(
+      Animated.View,
+      { style: styles.text_v },
+      React.createElement(
+        Text,
+        { style: styles.text },
+        text
+      )
+    )
   );
 }
 
@@ -45,6 +54,13 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     backgroundColor: 'red',
+    height:0
+  },
+  text_v: {
+    height: 50,
+    width: '100%',
+    justifyContent: "center",
+    alignItems: 'center'
   },
   text: {
     paddingVertical: 16,

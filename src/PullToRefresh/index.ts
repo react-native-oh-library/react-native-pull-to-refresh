@@ -27,7 +27,10 @@ export class PullToRefresh extends React.Component<PullToRefreshProps> {
     }
 
     if (onRefresh) {
-      return <PullToRefresh.DefaultHeader onRefresh={onRefresh} refreshing={!!refreshing} />;
+      return React.createElement(
+        PullToRefresh.DefaultHeader, 
+        { onRefresh, refreshing: !!refreshing }
+      );
     }
 
     return null;
@@ -38,14 +41,14 @@ export class PullToRefresh extends React.Component<PullToRefreshProps> {
     if (footer) {
       return footer;
     }
-
     if (onLoadMore) {
-      return (
-        <PullToRefresh.DefaultFooter
-          onRefresh={onLoadMore}
-          refreshing={!!loadingMore}
-          noMoreData={noMoreData}
-        />
+      return React.createElement(
+        PullToRefresh.DefaultFooter,
+        {
+          onRefresh: onLoadMore,
+          refreshing: !!loadingMore,
+          noMoreData: noMoreData
+        }
       );
     }
 
@@ -53,15 +56,17 @@ export class PullToRefresh extends React.Component<PullToRefreshProps> {
   }
 
   render() {
-    const {children, style} = this.props;
-    return (
-      <NativePullToRefresh 
-        style={[styles.fill, style]}
-      >
-        {this.renderHeader()}
-        {children}
-        {this.renderFooter()}
-      </NativePullToRefresh>
+    const { children, style } = this.props;
+    
+    return React.createElement(
+      NativePullToRefresh,
+      { 
+        style: [styles.fill, style] 
+      },
+      // 子元素列表
+      this.renderHeader(),
+      children,
+      this.renderFooter()
     );
   }
 }

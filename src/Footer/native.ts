@@ -42,12 +42,13 @@ class PullToRefreshFooter extends Component<NativePullToRefreshFooterProps> {
   }
 
   render(): ReactNode {
-    return (
-      <NativePullToRefreshFooter
-        {...this.props}
-        ref={this._setNativeRef}
-        onRefresh={this._onRefresh}
-      />
+    return React.createElement(
+      NativePullToRefreshFooter,
+      {
+        ...this.props,
+        ref: this._setNativeRef,
+        onRefresh: this._onRefresh
+      }
     );
   }
 }

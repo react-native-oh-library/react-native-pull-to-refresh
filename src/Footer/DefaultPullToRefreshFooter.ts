@@ -1,5 +1,5 @@
 import React, {useCallback, useState} from 'react';
-import {StyleSheet, Text} from 'react-native';
+import {StyleSheet, Text,Animated} from 'react-native';
 import {
   PullToRefreshFooterProps,
   PullToRefreshOffsetChangedEvent,
@@ -29,17 +29,26 @@ export function DefaultPullToRefreshFooter(props: PullToRefreshFooterProps) {
     console.log('refresh footer offset', event.nativeEvent.offset);
   }, []);
 
-  return (
-    <PullToRefreshFooter
-      style={styles.container}
-      manual
-      onOffsetChanged={onOffsetChanged}
-      onStateChanged={onStateChanged}
-      onRefresh={onRefresh}
-      refreshing={refreshing}
-      noMoreData={noMoreData}>
-      <Text style={styles.text}>{noMoreData ? '没有更多数据了' : text}</Text>
-    </PullToRefreshFooter>
+  return React.createElement(
+    PullToRefreshFooter,
+    {
+      style: styles.container,
+      manual: true,
+      onOffsetChanged: onOffsetChanged,
+      onStateChanged: onStateChanged,
+      onRefresh: onRefresh,
+      refreshing: refreshing,
+      noMoreData: noMoreData
+    },
+    React.createElement(
+      Animated.View,
+      { style: styles.text_v },
+      React.createElement(
+        Text,
+        { style: styles.text },
+        noMoreData ? '没有更多数据了' : text
+      )
+    )
   );
 }
 
@@ -50,10 +59,15 @@ const styles = StyleSheet.create({
     width:'100%',
     height:0
   },
+  text_v: {
+    height: 50,
+    width: '100%',
+    justifyContent: "center",
+    alignItems: 'center'
+  },
   text: {
     paddingVertical: 16,
     fontSize: 17,
-    color: 'white',
-    height:50,
+    color: 'white'
   },
 });

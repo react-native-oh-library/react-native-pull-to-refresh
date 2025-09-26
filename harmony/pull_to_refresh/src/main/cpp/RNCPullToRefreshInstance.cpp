@@ -23,7 +23,6 @@
 namespace rnoh {
 
 static void receiveEvent(ArkUI_NodeEvent *event) {
-#ifdef C_API_ARCH
     try {
         auto eventType = OH_ArkUI_NodeEvent_GetEventType(event);
         auto target = static_cast<RNCPullToRefreshInstance *>(OH_ArkUI_NodeEvent_GetUserData(event));
@@ -37,7 +36,6 @@ static void receiveEvent(ArkUI_NodeEvent *event) {
     } catch (std::exception &e) {
         LOG(ERROR) << e.what();
     }
-#endif
 }
 
 RNCPullToRefreshInstance::RNCPullToRefreshInstance(Context context)
@@ -255,7 +253,7 @@ void RNCPullToRefreshInstance::onActionUpEnd() {
     auto maxTranslate = MAX_TRANSLATE;
     if (trYTop > 0) {
         if (up_status == Up_FREE || up_status == Up_PULL_DOWN_1 || up_status == Up_PULL_DOWN_2) {
-            if ((trYTop / maxTranslate < 0.5) || m_footerInstance->isNoMoreData()) {
+            if ((trYTop / maxTranslate < 0.5) || (m_footerInstance && m_footerInstance->isNoMoreData())) {
                 closeHeaderRefresh(0, PULL_FOOTER);
             } else {
                 up_status = Up_REFRESHING;

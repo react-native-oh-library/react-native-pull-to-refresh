@@ -16,6 +16,8 @@
 #include "RNCPullToRefreshHeaderInstance.h"
 #include "PullState.h"
 #include "PullUtils.h"
+#include "RNOH/arkui/NativeNodeApi.h"
+
 namespace rnoh {
 RNCPullToRefreshHeaderInstance::RNCPullToRefreshHeaderInstance(Context context)
     : BaseRNCPullToRefreshHeaderNativeComponentInstance(std::move(context)) {

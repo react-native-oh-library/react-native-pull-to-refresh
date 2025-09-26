@@ -51,12 +51,13 @@ class PullToRefreshHeader extends Component<NativePullToRefreshHeaderProps> {
   }
 
   render(): ReactNode {
-    return (
-      <NativePullToRefreshHeader
-        {...this.props}
-        ref={this._setNativeRef}
-        onRefresh={this._onRefresh}
-      />
+    return React.createElement(
+      NativePullToRefreshHeader,
+      {
+        ...this.props,
+        ref: this._setNativeRef,
+        onRefresh: this._onRefresh
+      }
     );
   }
 }

@@ -4,8 +4,8 @@ import {PullToRefresh} from './PullToRefresh';
 
 export default function PullToRefreshControl(props: RefreshControlProps) {
   if (Platform.OS === 'android') {
-    return <PullToRefresh {...props} />;
+      return React.createElement(PullToRefresh, props);
   }
   // @ts-ignore
-  return <PullToRefresh.DefaultHeader {...props} />;
+  return React.createElement(PullToRefresh.DefaultHeader, props);
 }

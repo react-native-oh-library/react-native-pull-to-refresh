@@ -183,7 +183,6 @@ void RNCPullToRefreshInstance::panGesture(ArkUI_NodeHandle arkUI_NodeHandle) {
 
         ArkUI_GestureEventActionType actionType = OH_ArkUI_GestureEvent_GetActionType(event);
         if (actionType == GESTURE_EVENT_ACTION_ACCEPT) {
-            instance->trYTop = 0;
             instance->offsetY = 0;
             instance->downY = OH_ArkUI_PanGesture_GetOffsetY(event);
             instance->touchYOld = instance->offsetY;
@@ -236,7 +235,7 @@ void RNCPullToRefreshInstance::onActionPullUpdate() {
 
 void RNCPullToRefreshInstance::onActionPullEnd() {
     auto maxTranslate = MAX_TRANSLATE;
-    if (trYTop > 0) {
+    if (trYTop > 0 && up_status == Up_FREE) {
         if (state == FREE || state == PULL_DOWN_1 || state == PULL_DOWN_2) {
             if (trYTop / maxTranslate < 0.5) {
                 closeHeaderRefresh(0, PULL_HEADER);
@@ -252,7 +251,7 @@ void RNCPullToRefreshInstance::onActionPullEnd() {
 }
 void RNCPullToRefreshInstance::onActionUpEnd() {
     auto maxTranslate = MAX_TRANSLATE;
-    if (trYTop > 0) {
+    if (trYTop > 0 && state == FREE) {
         if (up_status == Up_FREE || up_status == Up_PULL_DOWN_1 || up_status == Up_PULL_DOWN_2) {
             if ((trYTop / maxTranslate < 0.5) || (m_footerInstance && m_footerInstance->isNoMoreData())) {
                 closeHeaderRefresh(0, PULL_FOOTER);
@@ -353,7 +352,7 @@ bool RNCPullToRefreshInstance::isComponentTop() {
         if (c->getComponentName() == "ScrollView") {
             auto scrollView = std::dynamic_pointer_cast<rnoh::ScrollViewComponentInstance>(c);
             if (scrollView != nullptr) {
-                return scrollView->getScrollViewMetrics().contentOffset.y <= 0;
+                return scrollView->getScrollViewMetrics().contentOffset.y <= 0 && up_status == Up_FREE;
             }
         }
     }
@@ -369,7 +368,7 @@ bool RNCPullToRefreshInstance::isComponentBottom() {
                 // 内容高度-可视高度
                 auto maxScrollHeight = scrollView->getScrollViewMetrics().contentSize.height -
                                        scrollView->getScrollViewMetrics().containerSize.height;
-                return scrollView->getScrollViewMetrics().contentOffset.y >= maxScrollHeight - 10;
+                return scrollView->getScrollViewMetrics().contentOffset.y >= maxScrollHeight - 10 && state == FREE;
             }
         }
     }
@@ -422,6 +421,7 @@ void RNCPullToRefreshInstance::onOffsetChanged(bool isHeader, float offset) {
 
 void RNCPullToRefreshInstance::closeHeaderRefresh(float target, int closeTag) {
     if (trYTop == target) {
+        DLOG(INFO)<<"pull-to-refresh closeHeaderRefresh trYTop:"<<trYTop << ";target:"<<target;
         return;
     }
     if (animation != nullptr && (animation->GetAnimationStatus() == CLOSE_ANIMATION_START ||

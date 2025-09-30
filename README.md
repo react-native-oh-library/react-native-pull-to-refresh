@@ -1,4 +1,4 @@
-# @react-native-oh-tpl/pull_to_refresh
+# @react-native-ohos/pull_to_refresh
 This project is based on  [ @sdcx/pull-to-refresh](https://github.com/sdcxtech/react-native-troika/tree/master/packages/pull-to-refresh)
 ## Documentation
 [中文](https://gitee.com/react-native-oh-library/usage-docs/blob/master/zh-cn/pull_to_refresh.md)

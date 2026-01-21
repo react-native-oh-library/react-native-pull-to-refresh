@@ -1,7 +1,7 @@
 {
   "name": "@react-native-ohos/pull-to-refresh",
   "description": "A react-native PullToRefresh component.",
-  "version": "0.27.1-rc.2",
+  "version": "0.27.1-rc.3",
   "main": "./src/index.tsx",
   "react-native": "src/index",
   "nativePackage": true,

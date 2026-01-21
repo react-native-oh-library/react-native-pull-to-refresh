@@ -29,7 +29,6 @@ RNCPullToRefreshHeaderInstance::RNCPullToRefreshHeaderInstance(Context context)
 RNCPullToRefreshHeaderInstance::~RNCPullToRefreshHeaderInstance() { m_pullToRefreshNodeDelegate = nullptr; }
 void RNCPullToRefreshHeaderInstance::onChildInserted(ComponentInstance::Shared const &childComponentInstance,
                                                      std::size_t index) {
-    childComponentInstance->getLocalRootArkUINode().setPosition({0, 0});
     CppComponentInstance::onChildInserted(childComponentInstance, index);
     m_headerStackNode.insertChild(childComponentInstance->getLocalRootArkUINode(), index);
 }
@@ -49,6 +48,9 @@ void RNCPullToRefreshHeaderInstance::finalizeUpdates() {
             if (height > childHeight) {
                 childHeight = height;
             }
+            auto x = c->getLayoutMetrics().frame.origin.x > 0 ? c->getLayoutMetrics().frame.origin.x: 0;
+            auto y = c->getLayoutMetrics().frame.origin.y > 0 ? c->getLayoutMetrics().frame.origin.y: 0;
+            c->getLocalRootArkUINode().setPosition({x, y});
         }
     }
     double pointScaleFactor = getLayoutMetrics().pointScaleFactor;

@@ -24,10 +24,8 @@ RNCPullToRefreshFooterInstance::~RNCPullToRefreshFooterInstance() { m_pullToRefr
 
 void RNCPullToRefreshFooterInstance::onChildInserted(ComponentInstance::Shared const &childComponentInstance,
                                                      std::size_t index) {
-    childComponentInstance->getLocalRootArkUINode().setPosition({0, 0});
     CppComponentInstance::onChildInserted(childComponentInstance, index);
     m_footerStackNode.insertChild(childComponentInstance->getLocalRootArkUINode(), index);
-    m_footerStackNode.setPosition({0, 0});
 }
 
 void RNCPullToRefreshFooterInstance::onChildRemoved(ComponentInstance::Shared const &childComponentInstance) {
@@ -44,6 +42,9 @@ void RNCPullToRefreshFooterInstance::finalizeUpdates() {
             if (height > mChildHeight) {
                 mChildHeight = height;
             }
+            auto x = c->getLayoutMetrics().frame.origin.x > 0 ? c->getLayoutMetrics().frame.origin.x: 0;
+            auto y = c->getLayoutMetrics().frame.origin.y > 0 ? c->getLayoutMetrics().frame.origin.y: 0;
+            c->getLocalRootArkUINode().setPosition({x, y});
         }
     }
     double pointScaleFactor = getLayoutMetrics().pointScaleFactor;

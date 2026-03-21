@@ -76,3 +76,6 @@ yarn-error.log
 
 # packages
 dist/
+harmony/pull_to_refresh/oh_modules/
+harmony/pull_to_refresh/BuildProfile.ets
+harmony/pull_to_refresh/oh-package-lock.json5

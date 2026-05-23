@@ -138,7 +138,7 @@ export default function Menu({
 				<Animated.View style={contentAnimatedStyle}>
 					{_renderMenuContent()}
 					<Animated.View
-						style={[StyleSheet.absoluteFillObject, anchorAnimatedStyle]}
+						style={[StyleSheet.absoluteFill, anchorAnimatedStyle]}
 						pointerEvents="none"
 					>
 						{_renderAnchor()}
@@ -152,7 +152,11 @@ export default function Menu({
 const styles = StyleSheet.create({
 	fill: { flex: 1 },
 	mask: {
-		...StyleSheet.absoluteFillObject,
+		position: 'absolute',
+		top: 0,
+		right: 0,
+		bottom: 0,
+		left: 0,
 		backgroundColor: 'rgba(255, 255, 255, 0.8)',
 	},
 

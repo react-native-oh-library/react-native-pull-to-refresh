@@ -79,7 +79,10 @@ const styles = StyleSheet.create({
 		justifyContent: 'flex-end',
 	},
 	bottomSheet: {
-		...StyleSheet.absoluteFillObject,
+		position: 'absolute',
+		right: 0,
+		bottom: 0,
+		left: 0,
 		top: 80,
 		backgroundColor: '#ff9f7A',
 	},

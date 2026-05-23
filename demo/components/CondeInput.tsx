@@ -33,7 +33,7 @@ export default function CodeInput({
 				clearButtonMode="never"
 				onChangeText={onValueChange}
 			/>
-			<View style={[styles.cover, StyleSheet.absoluteFillObject]} pointerEvents="none">
+			<View style={[styles.cover, StyleSheet.absoluteFill]} pointerEvents="none">
 				{cells.map((text: string, index: number) => (
 					<View
 						style={[

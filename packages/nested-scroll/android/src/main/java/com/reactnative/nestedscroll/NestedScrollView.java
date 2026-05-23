@@ -18,14 +18,17 @@ import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.MeasureSpecAssertions;
+import com.facebook.react.uimanager.PointerEvents;
 import com.facebook.react.uimanager.ReactOverflowView;
+import com.facebook.react.uimanager.ReactPointerEventsView;
 import com.facebook.react.uimanager.StateWrapper;
 import com.facebook.react.uimanager.events.NativeGestureUtil;
 
-public class NestedScrollView extends androidx.core.widget.NestedScrollView implements ReactOverflowView {
+public class NestedScrollView extends androidx.core.widget.NestedScrollView implements ReactOverflowView, ReactPointerEventsView {
 	private static final String TAG = "NestedScrollView";
 	private final NestedScrollViewLocalData mNestedScrollViewLocalData = new NestedScrollViewLocalData();
 	private String mOverflow = "hidden";
+	private PointerEvents mPointerEvents = PointerEvents.AUTO;
 	private final Rect mRect;
 
 	private final NestedScrollFlingHelper mFlingHelper;
@@ -103,17 +106,49 @@ public class NestedScrollView extends androidx.core.widget.NestedScrollView impl
 
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev) {
+		if (mPointerEvents == PointerEvents.NONE) {
+			return false;
+		}
 		mFlingHelper.dispatchTouchEvent(ev);
 		return super.dispatchTouchEvent(ev);
 	}
 
 	@Override
 	public boolean onInterceptTouchEvent(@NonNull MotionEvent ev) {
+		if (!PointerEvents.canChildrenBeTouchTarget(mPointerEvents)) {
+			return true;
+		}
 		if (super.onInterceptTouchEvent(ev)) {
 			NativeGestureUtil.notifyNativeGestureStarted(this, ev);
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent ev) {
+		if (!PointerEvents.canBeTouchTarget(mPointerEvents)) {
+			return false;
+		}
+		return super.onTouchEvent(ev);
+	}
+
+	@Override
+	public boolean dispatchGenericMotionEvent(MotionEvent ev) {
+		if (!PointerEvents.canChildrenBeTouchTarget(mPointerEvents)) {
+			return false;
+		}
+		return super.dispatchGenericMotionEvent(ev);
+	}
+
+	public void setPointerEvents(PointerEvents pointerEvents) {
+		mPointerEvents = pointerEvents;
+	}
+
+	@NonNull
+	@Override
+	public PointerEvents getPointerEvents() {
+		return mPointerEvents;
 	}
 
 	@Override

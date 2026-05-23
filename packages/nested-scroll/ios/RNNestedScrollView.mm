@@ -227,6 +227,30 @@ using namespace facebook::react;
 	self.main.bounces = bounces;
 }
 
+- (UIView *)betterHitTest:(CGPoint)point withEvent:(UIEvent *)event {
+	if (!self.userInteractionEnabled || self.hidden || self.alpha < 0.01) {
+		return nil;
+	}
+
+	BOOL isPointInside = [self pointInside:point withEvent:event];
+
+	BOOL clipsToBounds = _main.clipsToBounds;
+	clipsToBounds = clipsToBounds || _layoutMetrics.overflowInset == EdgeInsets{};
+
+	if (clipsToBounds && !isPointInside) {
+		return nil;
+	}
+
+	for (UIView *subview in [_main.subviews reverseObjectEnumerator]) {
+		UIView *hitView = [subview hitTest:[subview convertPoint:point fromView:self] withEvent:event];
+		if (hitView) {
+			return hitView;
+		}
+	}
+
+	return isPointInside ? self : nil;
+}
+
 - (CGFloat)headerScrollRange {
 	return [self.header maxScrollRange];
 }

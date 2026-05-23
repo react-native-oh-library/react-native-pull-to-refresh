@@ -22,7 +22,15 @@ public class NestedScrollViewHeaderManager extends ViewGroupManager<NestedScroll
 	public final static String REACT_CLASS = "NestedScrollViewHeader";
 
 	private final NestedScrollViewHeaderManagerDelegate<NestedScrollViewHeader, NestedScrollViewHeaderManager> mDelegate
-		= new NestedScrollViewHeaderManagerDelegate<>(this);
+		= new NestedScrollViewHeaderManagerDelegate<>(this) {
+			@Override
+			public void setProperty(NestedScrollViewHeader view, String propName, @Nullable Object value) {
+				if (NestedScrollPointerEvents.setPointerEvents(view, propName, value)) {
+					return;
+				}
+				super.setProperty(view, propName, value);
+			}
+		};
 
 	@Override
 	protected ViewManagerDelegate<NestedScrollViewHeader> getDelegate() {

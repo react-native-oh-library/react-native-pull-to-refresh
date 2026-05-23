@@ -1,17 +1,18 @@
 import React, { PropsWithChildren } from 'react';
-import { Platform, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import { Platform, StyleProp, StyleSheet, ViewProps, ViewStyle } from 'react-native';
 import NestedScrollViewNativeComponent from './NestedScrollViewNativeComponent';
 import NestedScrollViewContent from './NestedScrollViewContent';
 import NestedScrollViewChild from './NestedScrollViewChild';
 import NestedScrollViewHeader from './NestedScrollViewHeader';
 
-export type NestedScrollViewProps = PropsWithChildren<{
-	style?: StyleProp<ViewStyle>;
+export type NestedScrollViewProps = PropsWithChildren<
+	ViewProps & {
 	//Android Only
 	contentContainerStyle?: StyleProp<ViewStyle>;
 	//iOS Only
 	bounces?: boolean;
-}>;
+	}
+>;
 
 function NestedScrollView({ children, style, ...props }: NestedScrollViewProps) {
 	if (React.Children.count(children) > 2) {

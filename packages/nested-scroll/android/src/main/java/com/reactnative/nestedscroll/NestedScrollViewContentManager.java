@@ -1,6 +1,7 @@
 package com.reactnative.nestedscroll;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.ViewGroupManager;
@@ -14,7 +15,15 @@ public class NestedScrollViewContentManager extends ViewGroupManager<NestedScrol
 	public final static String REACT_CLASS = "NestedScrollViewContent";
 
 	private final NestedScrollViewContentManagerDelegate<NestedScrollViewContent, NestedScrollViewContentManager> mDelegate
-		= new NestedScrollViewContentManagerDelegate<>(this);
+		= new NestedScrollViewContentManagerDelegate<>(this) {
+			@Override
+			public void setProperty(NestedScrollViewContent view, String propName, @Nullable Object value) {
+				if (NestedScrollPointerEvents.setPointerEvents(view, propName, value)) {
+					return;
+				}
+				super.setProperty(view, propName, value);
+			}
+		};
 
 	@Override
 	protected ViewManagerDelegate<NestedScrollViewContent> getDelegate() {

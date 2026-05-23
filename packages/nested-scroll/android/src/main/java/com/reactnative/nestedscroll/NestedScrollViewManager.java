@@ -16,7 +16,15 @@ public class NestedScrollViewManager extends ViewGroupManager<NestedScrollView>
 	implements NestedScrollViewManagerInterface<NestedScrollView> {
 
 	private final NestedScrollViewManagerDelegate<NestedScrollView, NestedScrollViewManager> mDelegate
-		= new NestedScrollViewManagerDelegate<>(this);
+		= new NestedScrollViewManagerDelegate<>(this) {
+			@Override
+			public void setProperty(NestedScrollView view, String propName, @Nullable Object value) {
+				if (NestedScrollPointerEvents.setPointerEvents(view, propName, value)) {
+					return;
+				}
+				super.setProperty(view, propName, value);
+			}
+		};
 
 	@Override
 	protected ViewManagerDelegate<NestedScrollView> getDelegate() {

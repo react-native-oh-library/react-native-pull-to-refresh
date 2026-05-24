@@ -16,12 +16,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const demoTheme = {
 	colors: {
-		background: '#F6F7F9',
+		background: '#F3F6FA',
 		surface: '#FFFFFF',
-		text: '#121826',
-		muted: '#667085',
-		subtle: '#98A2B3',
-		line: '#E4E7EC',
+		surfaceMuted: '#F8FAFC',
+		text: '#101828',
+		muted: '#5F6C80',
+		subtle: '#9AA6B8',
+		line: '#DDE3EC',
+		lineSoft: '#E9EEF5',
 		blue: '#2563EB',
 		cyan: '#0891B2',
 		green: '#168A5A',
@@ -96,10 +98,9 @@ export function DemoList<T extends DemoItem>({
 	keyExtractor,
 }: DemoListProps<T>) {
 	const insets = useSafeAreaInsets();
-	const renderItem: ListRenderItem<T> = ({ item, index }) => (
+	const renderItem: ListRenderItem<T> = ({ item }) => (
 		<DemoListCard
 			item={item}
-			index={index}
 			accentColor={item.accentColor ?? accentColor}
 			onPress={() => onItemPress(item)}
 		/>
@@ -179,7 +180,10 @@ export function DemoListHeader({
 	return (
 		<View style={styles.header}>
 			{eyebrow ? (
-				<Text style={[styles.eyebrow, { color: accentColor }]}>{eyebrow}</Text>
+				<View style={styles.eyebrowRow}>
+					<View style={[styles.eyebrowDot, { backgroundColor: accentColor }]} />
+					<Text style={[styles.eyebrow, { color: accentColor }]}>{eyebrow}</Text>
+				</View>
 			) : null}
 			<Text
 				style={styles.headerTitle}
@@ -190,7 +194,9 @@ export function DemoListHeader({
 				{title}
 			</Text>
 			{subtitle ? <Text style={styles.headerSubtitle}>{subtitle}</Text> : null}
-			<View style={[styles.headerLine, { backgroundColor: accentColor }]} />
+			<View style={styles.headerLineTrack}>
+				<View style={[styles.headerLine, { backgroundColor: accentColor }]} />
+			</View>
 			{children ? <View style={styles.headerMedia}>{children}</View> : null}
 		</View>
 	);
@@ -255,39 +261,46 @@ export function DemoButton({
 
 function DemoListCard({
 	item,
-	index,
 	accentColor,
 	onPress,
 }: {
 	item: DemoItem;
-	index: number;
 	accentColor: string;
 	onPress: () => void;
 }) {
 	return (
 		<TouchableOpacity activeOpacity={0.82} style={styles.itemCard} onPress={onPress}>
-			<View style={[styles.itemMark, { backgroundColor: tint(accentColor, '18') }]}>
-				<Text style={[styles.itemNumber, { color: accentColor }]}>
-					{String(index + 1).padStart(2, '0')}
-				</Text>
-			</View>
-			<View style={styles.itemTextColumn}>
-				<Text style={styles.itemTitle} numberOfLines={2}>
-					{item.title}
-				</Text>
+			<View style={[styles.itemAccent, { backgroundColor: accentColor }]} />
+			<View style={styles.itemBody}>
+				<View style={styles.itemTopRow}>
+					<Text style={styles.itemTitle} numberOfLines={2}>
+						{item.title}
+					</Text>
+					{item.badge ? (
+						<View
+							style={[
+								styles.badge,
+								{
+									backgroundColor: tint(accentColor, '10'),
+									borderColor: tint(accentColor, '22'),
+								},
+							]}
+						>
+							<Text
+								style={[styles.badgeText, { color: accentColor }]}
+								numberOfLines={1}
+							>
+								{item.badge}
+							</Text>
+						</View>
+					) : null}
+				</View>
 				{item.subtitle ? (
 					<Text style={styles.itemSubtitle} numberOfLines={2}>
 						{item.subtitle}
 					</Text>
 				) : null}
 			</View>
-			{item.badge ? (
-				<View style={[styles.badge, { backgroundColor: tint(accentColor, '12') }]}>
-					<Text style={[styles.badgeText, { color: accentColor }]} numberOfLines={1}>
-						{item.badge}
-					</Text>
-				</View>
-			) : null}
 			<Image
 				source={require('assets/indicator.png')}
 				style={styles.chevron}
@@ -306,13 +319,10 @@ function tint(color: string, alpha: string) {
 
 const elevated = Platform.select({
 	ios: {
-		shadowColor: '#101828',
-		shadowOpacity: 0.08,
-		shadowRadius: 14,
-		shadowOffset: { width: 0, height: 8 },
-	},
-	android: {
-		elevation: 2,
+		shadowColor: '#182235',
+		shadowOpacity: 0.045,
+		shadowRadius: 10,
+		shadowOffset: { width: 0, height: 4 },
 	},
 	default: {},
 });
@@ -326,30 +336,40 @@ const styles = StyleSheet.create({
 		backgroundColor: demoTheme.colors.background,
 	},
 	listContent: {
-		paddingHorizontal: 16,
+		paddingHorizontal: 18,
 	},
 	screenContent: {
-		paddingHorizontal: 16,
+		paddingHorizontal: 18,
 	},
 	safeArea: {
 		flex: 1,
 	},
 	header: {
-		paddingTop: 4,
-		paddingBottom: 18,
+		paddingTop: 2,
+		paddingBottom: 20,
+	},
+	eyebrowRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginBottom: 9,
+	},
+	eyebrowDot: {
+		width: 7,
+		height: 7,
+		borderRadius: 3.5,
+		marginRight: 8,
 	},
 	eyebrow: {
 		fontSize: 12,
 		lineHeight: 16,
-		fontWeight: '700',
+		fontWeight: '800',
 		textTransform: 'uppercase',
 		letterSpacing: 0,
-		marginBottom: 8,
 	},
 	headerTitle: {
 		color: demoTheme.colors.text,
-		fontSize: 30,
-		lineHeight: 36,
+		fontSize: 32,
+		lineHeight: 38,
 		fontWeight: '800',
 		letterSpacing: 0,
 	},
@@ -359,14 +379,21 @@ const styles = StyleSheet.create({
 		lineHeight: 22,
 		marginTop: 8,
 	},
+	headerLineTrack: {
+		width: 96,
+		height: 4,
+		backgroundColor: demoTheme.colors.lineSoft,
+		borderRadius: 2,
+		marginTop: 16,
+		overflow: 'hidden',
+	},
 	headerLine: {
-		width: 48,
+		width: 42,
 		height: 4,
 		borderRadius: 2,
-		marginTop: 14,
 	},
 	headerMedia: {
-		marginTop: 18,
+		marginTop: 20,
 	},
 	itemCard: {
 		minHeight: 82,
@@ -375,70 +402,69 @@ const styles = StyleSheet.create({
 		backgroundColor: demoTheme.colors.surface,
 		borderRadius: 8,
 		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: demoTheme.colors.line,
-		marginBottom: 10,
-		paddingVertical: 14,
-		paddingLeft: 14,
-		paddingRight: 12,
+		borderColor: demoTheme.colors.lineSoft,
+		marginBottom: 12,
+		paddingVertical: 15,
+		paddingLeft: 16,
+		paddingRight: 14,
 		...elevated,
 	},
-	itemMark: {
-		width: 44,
+	itemAccent: {
+		width: 3,
 		height: 44,
-		borderRadius: 8,
-		alignItems: 'center',
-		justifyContent: 'center',
-		marginRight: 12,
+		borderRadius: 1.5,
+		marginRight: 14,
 	},
-	itemNumber: {
-		fontSize: 13,
-		lineHeight: 18,
-		fontWeight: '800',
-		letterSpacing: 0,
-	},
-	itemTextColumn: {
+	itemBody: {
 		flex: 1,
 		minWidth: 0,
-		marginRight: 10,
+		marginRight: 12,
+	},
+	itemTopRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
 	},
 	itemTitle: {
+		flex: 1,
+		minWidth: 0,
 		color: demoTheme.colors.text,
-		fontSize: 17,
-		lineHeight: 22,
-		fontWeight: '700',
+		fontSize: 16,
+		lineHeight: 21,
+		fontWeight: '800',
 		letterSpacing: 0,
 	},
 	itemSubtitle: {
 		color: demoTheme.colors.muted,
 		fontSize: 13,
-		lineHeight: 18,
-		marginTop: 3,
+		lineHeight: 19,
+		marginTop: 5,
 	},
 	badge: {
 		maxWidth: 86,
-		borderRadius: 8,
+		borderRadius: 6,
+		borderWidth: StyleSheet.hairlineWidth,
 		paddingHorizontal: 8,
-		paddingVertical: 5,
-		marginRight: 8,
+		paddingVertical: 4,
+		marginLeft: 10,
 	},
 	badgeText: {
-		fontSize: 12,
-		lineHeight: 15,
-		fontWeight: '700',
+		fontSize: 11,
+		lineHeight: 14,
+		fontWeight: '800',
 		letterSpacing: 0,
 	},
 	chevron: {
-		width: 14,
-		height: 14,
+		width: 12,
+		height: 12,
 		tintColor: demoTheme.colors.subtle,
 	},
 	panel: {
 		backgroundColor: demoTheme.colors.surface,
 		borderRadius: 8,
 		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: demoTheme.colors.line,
-		padding: 18,
-		marginBottom: 14,
+		borderColor: demoTheme.colors.lineSoft,
+		padding: 20,
+		marginBottom: 16,
 		...elevated,
 	},
 	button: {

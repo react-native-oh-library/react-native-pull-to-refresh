@@ -62,7 +62,6 @@ const AnimatedNavbar = ({
 const styles = StyleSheet.create({
 	container: {
 		position: 'absolute',
-		elevation: 2,
 		top: 0,
 		width: '100%',
 		backgroundColor: 'white',

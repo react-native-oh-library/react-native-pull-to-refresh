@@ -15,7 +15,7 @@ export type OnSlideEventPayload = {
 };
 
 export interface NativeProps extends ViewProps {
-	peekHeight?: CodegenTypes.WithDefault<CodegenTypes.Int32, 200>;
+	peekHeight?: CodegenTypes.WithDefault<CodegenTypes.Float, 200>;
 	draggable?: CodegenTypes.WithDefault<boolean, true>;
 	// 无法使用 state，会生成 BottomSheetState 枚举类型，和原本要生成的 BottomSheetState 结构体冲突
 	status?: CodegenTypes.WithDefault<BottomSheetStatus, 'collapsed'>;

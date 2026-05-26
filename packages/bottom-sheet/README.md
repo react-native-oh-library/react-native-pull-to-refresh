@@ -67,7 +67,7 @@ const App = () => {
 
 ### 属性
 
-- `peekHeight`, 是指 BottomSheet 收起时，在屏幕上露出的高度，默认是 200。
+- `peekHeight`, 是指 BottomSheet 收起时，在屏幕上露出的高度，支持小数，默认是 200。
 
 - `state`, 是指 BottomSheet 的状态，有三种状态：
 

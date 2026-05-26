@@ -43,9 +43,9 @@ public class BottomSheetManager extends ViewGroupManager<BottomSheet> implements
 	}
 
 	@Override
-	@ReactProp(name = "peekHeight", defaultInt = 200)
-	public void setPeekHeight(BottomSheet view, int dp) {
-		view.setPeekHeight((int) (PixelUtil.toPixelFromDIP(dp) + 0.5));
+	@ReactProp(name = "peekHeight", defaultFloat = 200f)
+	public void setPeekHeight(BottomSheet view, float dp) {
+		view.setPeekHeight(Math.round(PixelUtil.toPixelFromDIP(dp)));
 	}
 
 	@Override

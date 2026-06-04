@@ -42,6 +42,7 @@ public:
     void onNativeResponderBlockChange(bool isBlocked) override;
     void onClosePull(int tag) override;
     void autoRefresh() override;
+    void beginManualPull() override;
     void onAppArea() override;
     void handleScrollStop();
 

@@ -45,6 +45,9 @@ void RNCPullToRefreshHeaderInstance::finalizeUpdates() {
     for (ComponentInstance::Shared c : child) {
         if (c) {
             auto height = c->getLayoutMetrics().frame.size.height;
+            if (height == 0) {
+                height = c->getBoundingBox().size.height;
+            }
             if (height > childHeight) {
                 childHeight = height;
             }

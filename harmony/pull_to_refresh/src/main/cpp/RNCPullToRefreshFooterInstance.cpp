@@ -39,6 +39,9 @@ void RNCPullToRefreshFooterInstance::finalizeUpdates() {
     for (ComponentInstance::Shared c : child) {
         if (c) {
             auto height = c->getLayoutMetrics().frame.size.height;
+            if (height == 0) { 
+                height = c->getBoundingBox().size.height;
+            }
             if (height > mChildHeight) {
                 mChildHeight = height;
             }
@@ -65,8 +68,12 @@ void RNCPullToRefreshFooterInstance::onPropsChanged(SharedConcreteProps const &p
     }
     manual = props->manual;
     noMoreData = props->noMoreData;
-    if (!props->refreshing && m_pullToRefreshNodeDelegate) {
-        m_pullToRefreshNodeDelegate->onClosePull(PULL_FOOTER);
+    if (m_pullToRefreshNodeDelegate) {
+        if (props->refreshing ) {
+            m_pullToRefreshNodeDelegate->beginManualPull();
+        } else {
+            m_pullToRefreshNodeDelegate->onClosePull(PULL_FOOTER);
+        }
     }
 };
 void RNCPullToRefreshFooterInstance::onFinalizeUpdates(){

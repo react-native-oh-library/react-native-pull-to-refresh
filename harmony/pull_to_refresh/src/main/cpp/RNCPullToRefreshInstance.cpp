@@ -28,7 +28,7 @@ static void receiveEvent(ArkUI_NodeEvent *event) {
         auto eventType = OH_ArkUI_NodeEvent_GetEventType(event);
         auto target = static_cast<RNCPullToRefreshInstance *>(OH_ArkUI_NodeEvent_GetUserData(event));
 
-        if (eventType == ArkUI_NodeEventType::NODE_SCROLL_EVENT_ON_SCROLL_STOP) {
+        if (eventType == ArkUI_NodeEventType::NODE_SCROLL_EVENT_ON_SCROLL) {
             if (target) {
                 target->handleScrollStop();
             }
@@ -92,7 +92,7 @@ void RNCPullToRefreshInstance::unRegisterScroll() {
                 if (scrollView != nullptr) {
                     auto &m_node = scrollView->getLocalRootArkUINode();
                     NativeNodeApi::getInstance()->unregisterNodeEvent(m_node.getArkUINodeHandle(),
-                                                                      NODE_SCROLL_EVENT_ON_SCROLL_STOP);
+                                                                      NODE_SCROLL_EVENT_ON_SCROLL);
                     NativeNodeApi::getInstance()->removeNodeEventReceiver(m_node.getArkUINodeHandle(), receiveEvent);
                 }
             }
@@ -112,8 +112,8 @@ void RNCPullToRefreshInstance::onAppArea() {
                     auto &node = scrollView->getLocalRootArkUINode();
                     NativeNodeApi::getInstance()->addNodeEventReceiver(node.getArkUINodeHandle(), receiveEvent);
                     NativeNodeApi::getInstance()->registerNodeEvent(node.getArkUINodeHandle(),
-                                                                    NODE_SCROLL_EVENT_ON_SCROLL_STOP,
-                                                                    NODE_SCROLL_EVENT_ON_SCROLL_STOP, this);
+                                                                    NODE_SCROLL_EVENT_ON_SCROLL,
+                                                                    NODE_SCROLL_EVENT_ON_SCROLL, this);
                 }
             }
         }
@@ -365,7 +365,11 @@ bool RNCPullToRefreshInstance::isComponentBottom() {
         if (c->getComponentName() == "ScrollView") {
             auto scrollView = std::dynamic_pointer_cast<rnoh::ScrollViewComponentInstance>(c);
             if (scrollView != nullptr) {
-                // 内容高度-可视高度
+                auto metrics = scrollView->getScrollViewMetrics();
+                // ★ 新增：内容不足一屏，不算到底
+                if (metrics.contentSize.height < metrics.containerSize.height) {
+                    return false;
+                }
                 auto maxScrollHeight = scrollView->getScrollViewMetrics().contentSize.height -
                                        scrollView->getScrollViewMetrics().containerSize.height;
                 return scrollView->getScrollViewMetrics().contentOffset.y >= maxScrollHeight - 10 && state == FREE;
@@ -486,12 +490,33 @@ void RNCPullToRefreshInstance::autoRefresh() {
  * 自动上拉刷新
  */
 void RNCPullToRefreshInstance::handleScrollStop() {
-    if (m_footerInstance && m_footerInstance->isAutoLoadMore() && up_status == Up_FREE &&
-        !(m_footerInstance->isNoMoreData()) && isComponentBottom()) {
-        // 模拟上拉操作
-        autoAnimation(false);
+    if (!m_footerInstance || !m_footerInstance->isAutoLoadMore() ||
+        up_status != Up_FREE || m_footerInstance->isNoMoreData()) {
+        return;
+    }
+    std::vector<ComponentInstance::Shared> child = getChildren();
+    for (ComponentInstance::Shared c : child) {
+        if (c->getComponentName() == "ScrollView") {
+            auto scrollView = std::dynamic_pointer_cast<rnoh::ScrollViewComponentInstance>(c);
+            if (scrollView != nullptr) {
+                auto metrics = scrollView->getScrollViewMetrics();
+                if (metrics.contentSize.height < metrics.containerSize.height) {
+                    return;
+                }
+                float threshold = metrics.contentSize.height 
+                                - metrics.containerSize.height 
+                                + m_footerInstance->getFooterHeight() * 0.3;
+                if (metrics.contentOffset.y >= threshold && state == FREE) {
+                    up_status = Up_PULL_DOWN_2; // 防止多次触发（自动加载）
+                    autoAnimation(false);
+                }
+            }
+        }
     }
 }
+
+
+
 void RNCPullToRefreshInstance::autoAnimation(bool isHeader) {
     if (animation != nullptr && (animation->GetAnimationStatus() == CLOSE_ANIMATION_START ||
                                  animation->GetAnimationStatus() == CLOSE_ANIMATION_RUN)) {
@@ -542,5 +567,17 @@ void RNCPullToRefreshInstance::onClosePull(int tag) {
     if (tag == PULL_FOOTER) { // 关闭底部刷新的时候，将内容区域Y轴上的偏移量回归正常
         setListScrollPosition(0);
     }
+}
+
+/**
+ * 手动触发refresh
+ */
+void RNCPullToRefreshInstance::beginManualPull(){
+     up_status = Up_REFRESHING;
+     float footerHeight = m_footerInstance ? m_footerInstance->getFooterHeight() 
+                                              : MAX_TRANSLATE / 2;
+     trYTop = footerHeight; 
+     setUpFooterHeight(footerHeight);
+     onStateChanged(false, JS_PullToRefreshStateRefreshing);
 }
 } // namespace rnoh

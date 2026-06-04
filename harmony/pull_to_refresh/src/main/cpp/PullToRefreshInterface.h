@@ -21,6 +21,7 @@ public:
     virtual ~PullToRefreshInterface() = default;
     virtual void onClosePull(int tag){};
     virtual void autoRefresh(){};
+    virtual void beginManualPull(){};
 };
 
 #endif // HARMONY_PULLTOREFRESHINTERFACE_H

@@ -40,15 +40,11 @@ export function DefaultPullToRefreshFooter(props: PullToRefreshFooterProps) {
       refreshing: refreshing,
       noMoreData: noMoreData
     },
-    React.createElement(
-      Animated.View,
-      { style: styles.text_v },
-      React.createElement(
+     React.createElement(
         Text,
         { style: styles.text },
         noMoreData ? '没有更多数据了' : text
       )
-    )
   );
 }
 
@@ -60,10 +56,9 @@ const styles = StyleSheet.create({
     height:0
   },
   text_v: {
-    height: 50,
     width: '100%',
     justifyContent: "center",
-    alignItems: 'center'
+    alignItems: 'center',
   },
   text: {
     paddingVertical: 16,

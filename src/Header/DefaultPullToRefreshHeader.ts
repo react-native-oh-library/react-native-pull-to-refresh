@@ -39,13 +39,9 @@ export function DefaultPullToRefreshHeader(props: PullToRefreshHeaderProps) {
       refreshing: refreshing
     },
     React.createElement(
-      Animated.View,
-      { style: styles.text_v },
-      React.createElement(
         Text,
         { style: styles.text },
         text
-      )
     )
   );
 }

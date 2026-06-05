@@ -7,6 +7,8 @@ import PullRefreshScrollView from './PullRefreshScrollView';
 import PullRefreshWebView from './PullRefreshWebView';
 import PullRefreshPagerView from './PullRefreshPagerView';
 import PullRefreshFlatListNestedScroll from './PullRefreshFlatListNestedScroll';
+import PullRefreshFlatListNestedScrollShort from './PullRefreshFlatListNestedScrollShort';
+import PullRefreshGestureHandlerFlatListNestedScrollShort from './PullRefreshGestureHandlerFlatListNestedScrollShort';
 import PullRefreshPagerViewNestedScroll from './PullRefreshPagerViewNestedScroll';
 import PullRefreshNestedScrollPagerView from './PullRefreshNestedScrollPagerView';
 import PullRefreshWithoutScrollView from './PullRefreshWithoutScrollView';
@@ -26,6 +28,14 @@ export function registerPullToRefreshComponent() {
 		'PullRefreshFlatListNestedScroll',
 		() => PullRefreshFlatListNestedScroll,
 	);
+	Navigation.registerComponent(
+		'PullRefreshFlatListNestedScrollShort',
+		() => PullRefreshFlatListNestedScrollShort,
+	);
+	Navigation.registerComponent(
+		'PullRefreshGestureHandlerFlatListNestedScrollShort',
+		() => PullRefreshGestureHandlerFlatListNestedScrollShort,
+	);
 	Navigation.registerComponent('PullRefreshPagerView', () => PullRefreshPagerView);
 	Navigation.registerComponent(
 		'PullRefreshPagerViewNestedScroll',
@@ -39,8 +49,5 @@ export function registerPullToRefreshComponent() {
 		'PullRefreshWithoutScrollView',
 		() => PullRefreshWithoutScrollView,
 	);
-	Navigation.registerComponent(
-		'PullRefreshRemoveViewLog',
-		() => PullRefreshRemoveViewLog,
-	);
+	Navigation.registerComponent('PullRefreshRemoveViewLog', () => PullRefreshRemoveViewLog);
 }

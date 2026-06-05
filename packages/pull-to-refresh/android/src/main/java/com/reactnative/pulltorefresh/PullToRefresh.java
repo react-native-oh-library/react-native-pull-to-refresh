@@ -18,7 +18,6 @@ import com.scwang.smart.refresh.layout.SmartRefreshLayout;
 import com.scwang.smart.refresh.layout.api.RefreshFooter;
 import com.scwang.smart.refresh.layout.api.RefreshHeader;
 import com.scwang.smart.refresh.layout.api.RefreshKernel;
-import com.scwang.smart.refresh.layout.constant.RefreshState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,11 +121,20 @@ public class PullToRefresh extends SmartRefreshLayout implements ReactOverflowVi
 			return super.dispatchTouchEvent(ev);
 		}
 
-		// When nested scrolling is enabled, SmartRefreshLayout handles refresh via
-		// NestedScrollingParent callbacks (onNestedPreScroll, onNestedScroll, etc.).
-		// Skip custom touch handling to avoid interfering with child gesture handlers
-		// (e.g., Pressable click events).
-		if (ViewCompat.isNestedScrollingEnabled(scrollableView)) {
+		boolean nestedScrollingEnabled = ViewCompat.isNestedScrollingEnabled(scrollableView);
+		boolean canScrollVertical = scrollableView.canScrollVertically(-1)
+			|| scrollableView.canScrollVertically(1);
+
+		// When nested scrolling is enabled AND the inner content is actually scrollable,
+		// SmartRefreshLayout handles refresh via NestedScrollingParent callbacks
+		// (onNestedPreScroll, onNestedScroll, etc.). Skip custom touch handling to avoid
+		// interfering with child gesture handlers (e.g., Pressable click events).
+		//
+		// A short list (content shorter than its viewport) has no scroll range, so the inner
+		// scroll view never produces the nested-scroll deltas that drive the refresh. In that
+		// case we must fall through to the manual handling below, otherwise pull-to-refresh and
+		// load-more stop working inside a NestedScrollView. See issue #85.
+		if (nestedScrollingEnabled && canScrollVertical) {
 			boolean nestedScrollWasInProgress = mNestedInProgress;
 			boolean handled = super.dispatchTouchEvent(ev);
 			settleNestedScrollIfNeeded(ev, scrollableView, nestedScrollWasInProgress);
@@ -149,17 +157,36 @@ public class PullToRefresh extends SmartRefreshLayout implements ReactOverflowVi
 			return super.dispatchTouchEvent(ev);
 		}
 
-		// 数据不足以填满整个页面
-		if (!scrollableView.canScrollVertically(-1)
-			&& !scrollableView.canScrollVertically(1)
-			&& scrollableView instanceof ViewGroup) {
+		// 数据不足以填满整个页面（短列表）。
+		// 此时内部 ReactScrollView 没有滚动范围，自身不会开启嵌套滚动会话，也就不会通过
+		// NestedScrollingParent 回调驱动刷新；同时它的 onInterceptTouchEvent 会因为无法滚动
+		// 而提前返回 false，导致外层的 NestedScrollView 协调器抢走竖直方向的手势。
+		//
+		// 处理方式：手动驱动内部 ScrollView 的触摸逻辑，并从内部视图发起一次竖直方向的嵌套滚动。
+		// SmartRefreshLayout 作为它的 NestedScrollingParent 会接受这次嵌套滚动并继续向上传递给
+		// 外层协调器，于是协调器的 getNestedScrollAxes() 会包含竖直方向，其 onInterceptTouchEvent
+		// 便不会再抢走手势；同时内部 ScrollView 把无法消费的滚动量通过 onNestedScroll 上报，由
+		// SmartRefreshLayout 移动 header/footer 完成下拉刷新与上拉加载更多。一旦判定为竖直拖拽，
+		// 就阻止外层协调器拦截并消费该事件。
+		if (!canScrollVertical && scrollableView instanceof ViewGroup) {
+			ViewGroup viewGroup = (ViewGroup) scrollableView;
+			viewGroup.onInterceptTouchEvent(ev);
+			viewGroup.onTouchEvent(ev);
+
+			int action = ev.getActionMasked();
+			if (action == MotionEvent.ACTION_DOWN) {
+				scrollableView.startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
+			} else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+				scrollableView.stopNestedScroll();
+			}
+
 			if (shouldInterceptTouchEvent(ev)) {
 				NativeGestureUtil.notifyNativeGestureStarted(this, ev);
 				ViewParent parent = getParent();
 				if (parent != null) {
 					parent.requestDisallowInterceptTouchEvent(true);
 				}
-				return super.dispatchTouchEvent(ev);
+				return true;
 			}
 		}
 		return super.dispatchTouchEvent(ev);
@@ -261,11 +288,13 @@ public class PullToRefresh extends SmartRefreshLayout implements ReactOverflowVi
 	}
 
 	private boolean shouldSettleNestedScroll() {
-		return mNestedInProgress
-			&& (mState == RefreshState.PullDownToRefresh
-				|| mState == RefreshState.PullUpToLoad
-				|| mState == RefreshState.ReleaseToRefresh
-				|| mState == RefreshState.ReleaseToLoad);
+		// Settle whenever a nested-scroll session left the spinner displaced. This covers the
+		// pull-to-refresh / load-more drag states as well as pure over-scroll drag
+		// (mEnableOverScrollDrag, state == None), which an RNGH FlatList can otherwise leave stuck
+		// because it swallows the touch end and keeps SmartRefreshLayout in nested-scroll mode,
+		// so the spinner never bounces back. The settle is only posted after nested-scroll deltas
+		// go idle (see scheduleNestedScrollSettleIfNeeded), i.e. once the finger has lifted.
+		return mNestedInProgress && mSpinner != 0;
 	}
 
 	@Override

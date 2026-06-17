@@ -20,6 +20,7 @@ export type PullToRefreshOffsetChangedEvent = OffsetChangedEventData;
 export interface PullToRefreshHeaderProps {
   onRefresh?: () => void;
   refreshing: boolean;
+  progressViewOffset?: number | undefined;
 }
 
 export interface PullToRefreshFooterProps {
@@ -37,4 +38,6 @@ export interface PullToRefreshProps extends ViewProps {
   noMoreData?: boolean;
   header?: React.ReactElement<PullToRefreshHeaderProps>;
   footer?: React.ReactElement<PullToRefreshFooterProps>;
+  requestDisallowInterceptTouchEvent?: boolean;
+  progressViewOffset?: number | undefined;
 }

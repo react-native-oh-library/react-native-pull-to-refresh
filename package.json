@@ -1,7 +1,7 @@
 {
   "name": "@react-native-ohos/pull-to-refresh",
   "description": "A react-native PullToRefresh component.",
-  "version": "0.28.2-rc.1",
+  "version": "0.29.0-rc.1",
   "main": "./src/index.tsx",
   "react-native": "src/index",
   "nativePackage": true,
@@ -25,7 +25,7 @@
     "codegen-lib": "react-native codegen-lib-harmony --no-safety-check --npm-package-name pull-to-refresh --cpp-components-spec-paths ./src --cpp-output-path ./harmony/pull_to_refresh/src/main/cpp/generated --ets-output-path ./harmony/pull_to_refresh/src/main/ets/generated"
   },
   "dependencies":{
-    "@sdcx/pull-to-refresh": "0.27.0"
+    "@sdcx/pull-to-refresh": "1.1.6"
   },
   "peerDependencies": {
     "@babel/core": "^7.13.10",
@@ -48,7 +48,13 @@
     "@rnoh/react-native-harmony-cli": "npm:@react-native-oh/react-native-harmony-cli@^0.0.27"
   },
   "harmony": {
-    "alias": "@sdcx/pull-to-refresh"
+    "alias": "@sdcx/pull-to-refresh",
+    "autolinking": {
+      "etsPackageClassName":"PullToRefreshPackage",
+      "cppPackageClassName":"PullToRefreshPackage",
+      "cmakeLibraryTargetName": "rnoh_pull_to_refresh", 
+      "ohPackageName": "@react-native-ohos/pull-to-refresh"
+    }
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

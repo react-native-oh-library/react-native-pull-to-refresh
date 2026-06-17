@@ -41,6 +41,7 @@ public:
     void onFinalizeUpdates() override;
     void onNativeResponderBlockChange(bool isBlocked) override;
     void onClosePull(int tag) override;
+    bool getShouldRequestDisallowInterceptTouchEvent() const { return m_shouldRequestDisallowInterceptTouchEvent; }
     void autoRefresh() override;
     void beginManualPull() override;
     void onAppArea() override;
@@ -84,6 +85,7 @@ private:
     int32_t touchYNew{0};
     int32_t downY{0};   // first down touch on Y
     int32_t offsetY{0}; // pan offset on Y
+    bool m_shouldRequestDisallowInterceptTouchEvent{true};
 };
 
 } // namespace rnoh

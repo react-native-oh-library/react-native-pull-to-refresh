@@ -12,3 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { RNOHPackage } from "@rnoh/react-native-openharmony";
+ 
+ export default class PullToRefreshPackage extends RNOHPackage {
+ 
+ }

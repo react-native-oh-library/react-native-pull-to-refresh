@@ -20,7 +20,7 @@ export class PullToRefresh extends React.Component<PullToRefreshProps> {
   }
 
   renderHeader() {
-    const {onRefresh, refreshing, header} = this.props;
+    const {onRefresh, refreshing, header, progressViewOffset} = this.props;
 
     if (header) {
       return header;
@@ -28,8 +28,8 @@ export class PullToRefresh extends React.Component<PullToRefreshProps> {
 
     if (onRefresh) {
       return React.createElement(
-        PullToRefresh.DefaultHeader, 
-        { onRefresh, refreshing: !!refreshing }
+        PullToRefresh.DefaultHeader,
+        { onRefresh, refreshing: !!refreshing, progressViewOffset }
       );
     }
 
@@ -60,8 +60,9 @@ export class PullToRefresh extends React.Component<PullToRefreshProps> {
     
     return React.createElement(
       NativePullToRefresh,
-      { 
-        style: [styles.fill, style] 
+      {
+        style: [styles.fill, style],
+        requestDisallowInterceptTouchEvent: this.props.requestDisallowInterceptTouchEvent
       },
       // 子元素列表
       this.renderHeader(),

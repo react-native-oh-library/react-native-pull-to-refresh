@@ -69,12 +69,18 @@ void RNCPullToRefreshHeaderInstance::onPropsChanged(SharedConcreteProps const &p
     if (props == nullptr) {
         return;
     }
+    bool oldRefreshing = refreshing;
     refreshing = props->refreshing;
+    if (props->progressViewOffset.has_value()) {
+        m_progressViewOffset = props->progressViewOffset.value();
+    }
     if (m_pullToRefreshNodeDelegate) {
         if (!props->refreshing) {
             m_pullToRefreshNodeDelegate->onClosePull(PULL_HEADER);
         } else {
-            m_pullToRefreshNodeDelegate->autoRefresh();
+            if (!oldRefreshing) {
+                m_pullToRefreshNodeDelegate->autoRefresh();
+            }
         }
     }
 };

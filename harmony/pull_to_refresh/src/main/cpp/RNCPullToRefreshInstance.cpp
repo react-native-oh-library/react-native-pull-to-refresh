@@ -153,7 +153,19 @@ void RNCPullToRefreshInstance::onChildInserted(ComponentInstance::Shared const &
 
 void RNCPullToRefreshInstance::onChildRemoved(ComponentInstance::Shared const &childComponentInstance) {
     CppComponentInstance::onChildRemoved(childComponentInstance);
-    m_PullRefreshNode.removeChild(childComponentInstance->getLocalRootArkUINode());
+    auto componentName = childComponentInstance->getComponentName();
+
+    if (componentName == "RNCPullToRefreshHeaderNative") {
+        packageHeaderNode.removeChild(childComponentInstance->getLocalRootArkUINode());
+        m_headerStackNode.removeChild(packageHeaderNode);
+        m_headerInstance = nullptr;
+    } else if (componentName == "RNCPullToRefreshFooterNative") {
+        packageFooterNode.removeChild(childComponentInstance->getLocalRootArkUINode());
+        m_footerStackNode.removeChild(packageFooterNode);
+        m_footerInstance = nullptr;
+    } else {
+        m_listStackNode.removeChild(childComponentInstance->getLocalRootArkUINode());
+    }
 };
 
 ArkUINode &RNCPullToRefreshInstance::getLocalRootArkUINode() { return m_PullRefreshNode; };
@@ -161,6 +173,25 @@ ArkUINode &RNCPullToRefreshInstance::getLocalRootArkUINode() { return m_PullRefr
 
 void RNCPullToRefreshInstance::onPropsChanged(SharedConcreteProps const &props) {
     CppComponentInstance::onPropsChanged(props);
+    if (props == nullptr) {
+        return;
+    }
+    if (props->requestDisallowInterceptTouchEvent.has_value()) {
+        m_shouldRequestDisallowInterceptTouchEvent = props->requestDisallowInterceptTouchEvent.value();
+    }
+
+    if (m_shouldRequestDisallowInterceptTouchEvent) {
+        // 当请求禁止拦截触摸事件时，调整手势优先级
+        // 确保子组件（如 RNGH）的手势能够正常响应
+        if (m_panGesture) {
+            auto anyGestureApi = OH_ArkUI_QueryModuleInterfaceByName(ARKUI_NATIVE_GESTURE, "ArkUI_NativeGestureAPI_1");
+            auto gestureApi = reinterpret_cast<ArkUI_NativeGestureAPI_1 *>(anyGestureApi);
+            if (gestureApi) {
+                gestureApi->removeGestureFromNode(m_PullRefreshNode.getArkUINodeHandle(), m_panGesture);
+                gestureApi->addGestureToNode(m_PullRefreshNode.getArkUINodeHandle(), m_panGesture, PARALLEL, NORMAL_GESTURE_MASK);
+            }
+        }
+    }
 };
 void RNCPullToRefreshInstance::onFinalizeUpdates(){
 
@@ -201,11 +232,26 @@ void RNCPullToRefreshInstance::panGesture(ArkUI_NodeHandle arkUI_NodeHandle) {
             } else {
                 instance->onActionUpEnd();
             }
+        } else if (actionType == GESTURE_EVENT_ACTION_CANCEL) {
+            // 手势被取消时（如被 ScrollView 抢占），重置状态，避免状态机卡住
+            if (instance->state != REFRESHING) {
+                instance->state = FREE;
+            }
+            if (instance->up_status != Up_REFRESHING) {
+                instance->up_status = Up_FREE;
+            }
+            instance->trYTop = 0;
+            instance->touchYOld = 0;
+            instance->touchYNew = 0;
         }
     };
+    // 监听 ACCEPT | UPDATE | END | CANCEL 四种事件，确保手势状态能正确重置
     gestureApi->setGestureEventTarget(
-        m_panGesture, GESTURE_EVENT_ACTION_ACCEPT | GESTURE_EVENT_ACTION_UPDATE | GESTURE_EVENT_ACTION_END, this,
+        m_panGesture, GESTURE_EVENT_ACTION_ACCEPT | GESTURE_EVENT_ACTION_UPDATE | GESTURE_EVENT_ACTION_END | GESTURE_EVENT_ACTION_CANCEL, this,
         onPanActionCallBack);
+    // 使用 PARALLEL 优先级，让 PullToRefresh 手势与 ScrollView 手势并行响应
+    // 这样可以实时获取手势位移，由状态机根据 ScrollView 是否到达边界来决定是否实际触发刷新
+    // PARALLEL = 2 表示手势同时响应，避免 NORMAL 模式下子组件手势抢占导致的事件丢失
     gestureApi->addGestureToNode(arkUI_NodeHandle, m_panGesture, PARALLEL, NORMAL_GESTURE_MASK);
 }
 
@@ -213,6 +259,12 @@ void RNCPullToRefreshInstance::onActionPullUpdate() {
     if (state == FREE || state == PULL_DOWN_1 || state == PULL_DOWN_2 || state == PULL_UP) {
         touchYNew = offsetY;
         if (!isComponentTop()) {
+            // 当不在顶部时，重置 touchYOld 以便下次手势可以正确计算
+            // 同时重置 trYTop，避免手势被抢占后界面卡住
+            touchYOld = touchYNew;
+            if (trYTop > 0) {
+                closeHeaderRefresh(0, PULL_HEADER);
+            }
             return;
         }
         auto isPullAction = (touchYNew - touchYOld) > 0;
@@ -276,7 +328,12 @@ void RNCPullToRefreshInstance::onActionUpUpdate() {
     if (up_status == Up_FREE || up_status == Up_PULL_DOWN_1 || up_status == Up_PULL_DOWN_2 || up_status == Up_PULL_UP) {
         touchYNew = offsetY;
         if (!isComponentBottom()) {
+            // 当不在底部时，重置 touchYOld 以便下次手势可以正确计算
+            // 同时重置 trYTop，避免手势被抢占后界面卡住
             touchYOld = touchYNew;
+            if (trYTop > 0) {
+                closeHeaderRefresh(0, PULL_FOOTER);
+            }
             return;
         }
         float trY = touchYOld - touchYNew;
@@ -297,7 +354,12 @@ void RNCPullToRefreshInstance::onActionUpUpdate() {
 
 
 float RNCPullToRefreshInstance::getTranslateYOfRefresh(float newTranslateY, float sensitivity) {
-    facebook::react::Float maxTranslateY = MAX_TRANSLATE;
+    // 考虑 progressViewOffset
+    float effectiveMaxTranslate = MAX_TRANSLATE;
+    if (m_headerInstance) {
+        effectiveMaxTranslate += m_headerInstance->getProgressViewOffset();
+    }
+    facebook::react::Float maxTranslateY = effectiveMaxTranslate;
     // 阻尼值计算
     facebook::react::Float dampingFactor;
     if ((trYTop / maxTranslateY) < 0.2) {
@@ -336,12 +398,17 @@ void RNCPullToRefreshInstance::setUpFooterHeight(float height) {
 void RNCPullToRefreshInstance::onNativeResponderBlockChange(bool blocked) {
     std::vector<ComponentInstance::Shared> child = getChildren();
     for (ComponentInstance::Shared c : child) {
-        if (c->getComponentName() == "ScrollView") {
+        auto componentName = c->getComponentName();
+        // 支持 RNGH FlatList 的嵌套滚动协调
+        if (componentName == "ScrollView" || componentName == "RNGHScrollView" ||
+            componentName.find("FlatList") != std::string::npos) {
             auto scrollView = std::dynamic_pointer_cast<rnoh::ScrollViewComponentInstance>(c);
-            if (blocked) {
-                scrollView->setNativeResponderBlocked(!blocked, "REACT_NATIVE");
+            if (scrollView) {
+                if (blocked) {
+                    scrollView->setNativeResponderBlocked(!blocked, "REACT_NATIVE");
+                }
+                break;
             }
-            break;
         }
     }
 }
@@ -352,6 +419,12 @@ bool RNCPullToRefreshInstance::isComponentTop() {
         if (c->getComponentName() == "ScrollView") {
             auto scrollView = std::dynamic_pointer_cast<rnoh::ScrollViewComponentInstance>(c);
             if (scrollView != nullptr) {
+                auto metrics = scrollView->getScrollViewMetrics();
+                // 处理短列表嵌套场景
+                // 当内容高度小于容器高度时，允许直接触发下拉刷新
+                if (metrics.contentSize.height < metrics.containerSize.height) {
+                    return up_status == Up_FREE;
+                }
                 return scrollView->getScrollViewMetrics().contentOffset.y <= 0 && up_status == Up_FREE;
             }
         }
@@ -366,7 +439,7 @@ bool RNCPullToRefreshInstance::isComponentBottom() {
             auto scrollView = std::dynamic_pointer_cast<rnoh::ScrollViewComponentInstance>(c);
             if (scrollView != nullptr) {
                 auto metrics = scrollView->getScrollViewMetrics();
-                // ★ 新增：内容不足一屏，不算到底
+                // 内容不足一屏，不算到底
                 if (metrics.contentSize.height < metrics.containerSize.height) {
                     return false;
                 }
@@ -428,9 +501,11 @@ void RNCPullToRefreshInstance::closeHeaderRefresh(float target, int closeTag) {
         DLOG(INFO)<<"pull-to-refresh closeHeaderRefresh trYTop:"<<trYTop << ";target:"<<target;
         return;
     }
+    // 如果动画正在运行，先取消当前动画再启动新动画
     if (animation != nullptr && (animation->GetAnimationStatus() == CLOSE_ANIMATION_START ||
                                  animation->GetAnimationStatus() == CLOSE_ANIMATION_RUN)) {
-        return;
+        animation->Rest();
+        animation = nullptr;
     }
     if (animation == nullptr) {
         animation = std::make_shared<PullAnimated>();

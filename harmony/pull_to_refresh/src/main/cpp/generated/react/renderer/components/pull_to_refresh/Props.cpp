@@ -29,14 +29,15 @@ RNCPullToRefreshHeaderNativeProps::RNCPullToRefreshHeaderNativeProps(
     const RNCPullToRefreshHeaderNativeProps &sourceProps,
     const RawProps &rawProps): ViewProps(context, sourceProps, rawProps),
 
-    refreshing(convertRawProp(context, rawProps, "refreshing", sourceProps.refreshing, {false}))
+    refreshing(convertRawProp(context, rawProps, "refreshing", sourceProps.refreshing, {false})),
+    progressViewOffset(convertRawProp(context, rawProps, "progressViewOffset", sourceProps.progressViewOffset, {0.0}))
       {}
 RNCPullToRefreshNativeProps::RNCPullToRefreshNativeProps(
     const PropsParserContext &context,
     const RNCPullToRefreshNativeProps &sourceProps,
-    const RawProps &rawProps): ViewProps(context, sourceProps, rawProps)
+    const RawProps &rawProps): ViewProps(context, sourceProps, rawProps),
 
-    
+    requestDisallowInterceptTouchEvent(convertRawProp(context, rawProps, "requestDisallowInterceptTouchEvent", sourceProps.requestDisallowInterceptTouchEvent, {true}))
       {}
 
 } // namespace react

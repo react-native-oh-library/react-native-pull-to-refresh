@@ -6,6 +6,7 @@ import {
   } from 'react-native'
 
 export interface NativePullToRefreshProps extends ViewProps {
+  requestDisallowInterceptTouchEvent?: boolean;
 }
   
 export default codegenNativeComponent<NativePullToRefreshProps>("RNCPullToRefreshNative") as HostComponent<NativePullToRefreshProps>; 

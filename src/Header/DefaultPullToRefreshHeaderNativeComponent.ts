@@ -34,6 +34,7 @@ export interface NativePullToRefreshHeaderProps extends ViewProps {
   onStateChanged?: DirectEventHandler<PullToRefreshStateChangedEvent>;
   onOffsetChanged?: DirectEventHandler<PullToRefreshOffsetChangedEvent>;
   refreshing: boolean;
+  progressViewOffset?: Float;
 }
   
 export default codegenNativeComponent<NativePullToRefreshHeaderProps>("RNCPullToRefreshHeaderNative") as HostComponent<NativePullToRefreshHeaderProps>; 

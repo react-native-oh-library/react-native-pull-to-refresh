@@ -36,11 +36,13 @@ public:
     void onStateChanged(int status);
     void onOffsetChanged(float offset);
     bool getRefreshing() { return refreshing; }
+    float getProgressViewOffset() { return m_progressViewOffset; }
 
 private:
     PullStackNode m_headerStackNode;
     PullToRefreshInterface *m_pullToRefreshNodeDelegate{nullptr};
     bool refreshing{false};
+    float m_progressViewOffset{0.0f};
 };
 } // namespace rnoh
 

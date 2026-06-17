@@ -35,6 +35,7 @@ class RNCPullToRefreshHeaderNativeProps final : public ViewProps {
 #pragma mark - Props
 
   bool refreshing{false};
+  std::optional<int> progressViewOffset{0};
 };
 
 class RNCPullToRefreshNativeProps final : public ViewProps {
@@ -44,7 +45,7 @@ class RNCPullToRefreshNativeProps final : public ViewProps {
 
 #pragma mark - Props
 
-  
+  std::optional<bool> requestDisallowInterceptTouchEvent{true};
 };
 
 } // namespace react

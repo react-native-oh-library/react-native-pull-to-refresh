@@ -6,7 +6,7 @@
   "name": "@react-native-ohos/pull-to-refresh",
   "description": "Please describe the basic information.",
   "main": "index.ets",
-  "version": "0.29.0-rc.2",
+  "version": "1.0.0-rc.1",
   "dependencies": {
     "@rnoh/react-native-openharmony": "file:../react_native_openharmony"
   },

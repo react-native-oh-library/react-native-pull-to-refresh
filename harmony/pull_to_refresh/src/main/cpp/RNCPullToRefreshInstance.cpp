@@ -210,6 +210,9 @@ void RNCPullToRefreshInstance::panGesture(ArkUI_NodeHandle arkUI_NodeHandle) {
 }
 
 void RNCPullToRefreshInstance::onActionPullUpdate() {
+    if (!m_headerInstance) {
+        return;
+    }
     if (state == FREE || state == PULL_DOWN_1 || state == PULL_DOWN_2 || state == PULL_UP) {
         touchYNew = offsetY;
         if (!isComponentTop()) {
@@ -234,6 +237,9 @@ void RNCPullToRefreshInstance::onActionPullUpdate() {
 }
 
 void RNCPullToRefreshInstance::onActionPullEnd() {
+    if (!m_headerInstance) {
+        return;
+    }
     auto maxTranslate = MAX_TRANSLATE;
     if (trYTop > 0 && up_status == Up_FREE) {
         if (state == FREE || state == PULL_DOWN_1 || state == PULL_DOWN_2) {
@@ -250,6 +256,9 @@ void RNCPullToRefreshInstance::onActionPullEnd() {
     }
 }
 void RNCPullToRefreshInstance::onActionUpEnd() {
+    if (!m_footerInstance) {
+        return;
+    }
     auto maxTranslate = MAX_TRANSLATE;
     if (trYTop > 0 && state == FREE) {
         if (up_status == Up_FREE || up_status == Up_PULL_DOWN_1 || up_status == Up_PULL_DOWN_2) {
@@ -273,6 +282,9 @@ void RNCPullToRefreshInstance::onActionUpEnd() {
 }
 
 void RNCPullToRefreshInstance::onActionUpUpdate() {
+    if (!m_footerInstance) {
+        return;
+    }
     if (up_status == Up_FREE || up_status == Up_PULL_DOWN_1 || up_status == Up_PULL_DOWN_2 || up_status == Up_PULL_UP) {
         touchYNew = offsetY;
         if (!isComponentBottom()) {
